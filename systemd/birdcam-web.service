@@ -1,0 +1,19 @@
+[Unit]
+Description=Birdcam web application
+After=network.target
+
+[Service]
+Type=simple
+User=birdcam
+Group=birdcam
+WorkingDirectory=/opt/birdcam/src
+ExecStart=/opt/birdcam/venv/bin/gunicorn --bind 127.0.0.1:8080 --workers 2 --timeout 30 app:app
+Restart=on-failure
+RestartSec=5
+StartLimitBurst=5
+StartLimitIntervalSec=300
+StandardOutput=append:/var/log/birdcam/web.log
+StandardError=append:/var/log/birdcam/web.log
+
+[Install]
+WantedBy=multi-user.target

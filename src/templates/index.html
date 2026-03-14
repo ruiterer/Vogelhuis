@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block subtitle %}Live{% endblock %}
+{% block content %}
+<div class="stream-container">
+    <div class="video-wrapper">
+        <video id="video-player" playsinline muted autoplay></video>
+        <div id="camera-status" class="status-badge">Connecting...</div>
+    </div>
+    <div class="stream-controls">
+        <div class="stream-info">
+            <span id="clock"></span>
+            <span id="stream-res">{{ config.stream.resolution }} · {{ config.stream.framerate }}fps</span>
+        </div>
+        <div class="stream-actions">
+            <button id="btn-snapshot" class="btn" title="Take snapshot">Snapshot</button>
+            <button id="btn-fullscreen" class="btn" title="Fullscreen">Fullscreen</button>
+        </div>
+    </div>
+    <div id="snapshot-toast" class="toast hidden"></div>
+</div>
+
+<div class="snapshots-section">
+    <h2>Recent Snapshots</h2>
+    <div id="snapshots-list" class="snapshots-grid"></div>
+</div>
+{% endblock %}

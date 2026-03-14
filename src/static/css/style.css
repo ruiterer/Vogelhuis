@@ -1,0 +1,306 @@
+/* Birdcam UI — clean, minimal, responsive */
+
+:root {
+    --bg: #f5f5f5;
+    --surface: #ffffff;
+    --text: #1a1a1a;
+    --text-muted: #666;
+    --border: #e0e0e0;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --warning: #d97706;
+    --warning-hover: #b45309;
+    --success: #16a34a;
+    --danger: #dc2626;
+    --radius: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+}
+
+/* --- Navigation --- */
+
+header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+nav {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.nav-title {
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--text);
+    text-decoration: none;
+}
+
+.nav-links { display: flex; gap: 8px; }
+
+.nav-links a {
+    padding: 6px 14px;
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+}
+
+.nav-links a:hover { background: var(--bg); color: var(--text); }
+.nav-links a.active { background: var(--primary); color: #fff; }
+
+/* --- Main layout --- */
+
+main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 20px;
+}
+
+h1 { font-size: 24px; margin-bottom: 20px; }
+h2 { font-size: 18px; margin: 24px 0 12px; color: var(--text); }
+
+/* --- Buttons --- */
+
+.btn {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.btn:hover { background: var(--bg); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-warning { background: var(--warning); color: #fff; border-color: var(--warning); }
+.btn-warning:hover { background: var(--warning-hover); }
+
+/* --- Stream page --- */
+
+.stream-container {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.video-wrapper {
+    position: relative;
+    background: #000;
+    aspect-ratio: 16 / 9;
+}
+
+.video-wrapper video {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+}
+
+.status-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+}
+
+.status-badge.online { background: var(--success); }
+.status-badge.offline { background: var(--danger); }
+.status-badge.stale { background: var(--warning); }
+
+.stream-controls {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.stream-info {
+    display: flex;
+    gap: 16px;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.stream-actions { display: flex; gap: 8px; }
+
+/* --- Toast --- */
+
+.toast {
+    padding: 10px 16px;
+    margin: 8px 16px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    background: var(--success);
+    color: #fff;
+    transition: opacity 0.3s;
+}
+
+.toast.error { background: var(--danger); }
+.toast.hidden { display: none; }
+
+/* --- Snapshots --- */
+
+.snapshots-section { margin-top: 24px; }
+
+.snapshots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.snapshot-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+}
+
+.snapshot-card a {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 13px;
+    word-break: break-all;
+}
+
+.snapshot-card .meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* --- Settings page --- */
+
+.settings-container { max-width: 600px; }
+
+.settings-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.settings-group h2 { margin: 0 0 16px; }
+
+.settings-group label {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.settings-group select,
+.settings-group input[type="text"],
+.settings-group input[type="number"] {
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    background: var(--bg);
+}
+
+.hint { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+
+.form-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.save-status { font-size: 14px; }
+.save-status.ok { color: var(--success); }
+.save-status.err { color: var(--danger); }
+
+/* --- Health page --- */
+
+.health-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.health-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+}
+
+.health-card h3 { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+.health-value { font-size: 28px; font-weight: 700; }
+.health-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+.services-list {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.service-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.service-row:last-child { border-bottom: none; }
+
+.service-status {
+    font-weight: 600;
+    font-size: 13px;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.service-status.active { background: #dcfce7; color: var(--success); }
+.service-status.inactive { background: #fee2e2; color: var(--danger); }
+.service-status.unknown { background: var(--bg); color: var(--text-muted); }
+
+.health-note { font-size: 13px; color: var(--text-muted); margin-top: 16px; }
+
+/* --- Responsive --- */
+
+@media (max-width: 600px) {
+    nav { flex-direction: column; gap: 8px; }
+    .stream-controls { flex-direction: column; align-items: stretch; }
+    .stream-actions { justify-content: flex-end; }
+    .health-grid { grid-template-columns: repeat(2, 1fr); }
+}

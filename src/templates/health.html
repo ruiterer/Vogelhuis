@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block subtitle %}Health{% endblock %}
+{% block content %}
+<div class="health-container" id="health-dashboard">
+    <h1>System Health</h1>
+
+    <div class="health-grid">
+        <div class="health-card">
+            <h3>CPU</h3>
+            <div class="health-value" id="h-cpu">—</div>
+            <div class="health-label">usage</div>
+        </div>
+        <div class="health-card">
+            <h3>Memory</h3>
+            <div class="health-value" id="h-memory">—</div>
+            <div class="health-label" id="h-memory-detail"></div>
+        </div>
+        <div class="health-card">
+            <h3>Temperature</h3>
+            <div class="health-value" id="h-temp">—</div>
+            <div class="health-label">CPU</div>
+        </div>
+        <div class="health-card">
+            <h3>Disk</h3>
+            <div class="health-value" id="h-disk">—</div>
+            <div class="health-label" id="h-disk-detail"></div>
+        </div>
+        <div class="health-card">
+            <h3>Uptime</h3>
+            <div class="health-value" id="h-uptime">—</div>
+            <div class="health-label">system</div>
+        </div>
+        <div class="health-card">
+            <h3>Camera</h3>
+            <div class="health-value" id="h-camera">—</div>
+            <div class="health-label" id="h-camera-detail"></div>
+        </div>
+    </div>
+
+    <h2>Services</h2>
+    <div class="services-list">
+        <div class="service-row">
+            <span>birdcam-stream</span>
+            <span class="service-status" id="s-stream">—</span>
+        </div>
+        <div class="service-row">
+            <span>birdcam-web</span>
+            <span class="service-status" id="s-web">—</span>
+        </div>
+        <div class="service-row">
+            <span>nginx</span>
+            <span class="service-status" id="s-nginx">—</span>
+        </div>
+    </div>
+
+    <p class="health-note">Auto-refreshes every 5 seconds.</p>
+</div>
+{% endblock %}

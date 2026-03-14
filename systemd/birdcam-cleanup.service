@@ -1,0 +1,10 @@
+[Unit]
+Description=Birdcam snapshot and log cleanup
+
+[Service]
+Type=oneshot
+User=birdcam
+Group=birdcam
+ExecStart=/opt/birdcam/src/cleanup.sh
+StandardOutput=append:/var/log/birdcam/cleanup.log
+StandardError=append:/var/log/birdcam/cleanup.log

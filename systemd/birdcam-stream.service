@@ -1,0 +1,19 @@
+[Unit]
+Description=Birdcam camera streaming pipeline
+After=network.target
+
+[Service]
+Type=simple
+User=birdcam
+Group=birdcam
+ExecStart=/opt/birdcam/src/stream.sh
+Restart=on-failure
+RestartSec=5
+StartLimitBurst=5
+StartLimitIntervalSec=300
+WatchdogSec=30
+StandardOutput=append:/var/log/birdcam/stream.log
+StandardError=append:/var/log/birdcam/stream.log
+
+[Install]
+WantedBy=multi-user.target

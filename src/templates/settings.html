@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block subtitle %}Settings{% endblock %}
+{% block content %}
+<div class="settings-container">
+    <h1>Settings</h1>
+
+    <form id="settings-form">
+        <section class="settings-group">
+            <h2>Stream</h2>
+            <label>
+                Resolution
+                <select name="stream.resolution">
+                    {% for res in resolutions %}
+                    <option value="{{ res }}" {% if config.stream.resolution == res %}selected{% endif %}>{{ res }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                Framerate
+                <select name="stream.framerate">
+                    {% for fps in framerates %}
+                    <option value="{{ fps }}" {% if config.stream.framerate == fps %}selected{% endif %}>{{ fps }} fps</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <p class="hint">Changing stream settings will briefly interrupt the live stream.</p>
+        </section>
+
+        <section class="settings-group">
+            <h2>Interface</h2>
+            <label>
+                Page Title
+                <input type="text" name="ui.title" value="{{ config.ui.title }}" maxlength="100">
+            </label>
+        </section>
+
+        <section class="settings-group">
+            <h2>Snapshots</h2>
+            <label>
+                Storage Path
+                <input type="text" name="snapshots.path" value="{{ config.snapshots.path }}">
+            </label>
+            <label>
+                Retention (days)
+                <input type="number" name="snapshots.retention_days" value="{{ config.snapshots.retention_days }}" min="1" max="3650">
+            </label>
+            <label>
+                Minimum Free Disk (%)
+                <input type="number" name="snapshots.min_free_disk_percent" value="{{ config.snapshots.min_free_disk_percent }}" min="1" max="50">
+            </label>
+        </section>
+
+        <section class="settings-group">
+            <h2>System</h2>
+            <label>
+                Timezone
+                <input type="text" name="system.timezone" value="{{ config.system.timezone }}" maxlength="50">
+            </label>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+            <div id="save-status" class="save-status"></div>
+        </div>
+    </form>
+
+    <section class="settings-group">
+        <h2>Actions</h2>
+        <button id="btn-restart-stream" class="btn btn-warning">Restart Camera Stream</button>
+        <p class="hint">Restarts the camera capture pipeline. The stream will be interrupted for a few seconds.</p>
+    </section>
+</div>
+{% endblock %}

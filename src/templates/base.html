@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ config.ui.title }} — {% block subtitle %}Live{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/" class="nav-title">{{ config.ui.title }}</a>
+            <div class="nav-links">
+                <a href="/" {% if request.path == '/' %}class="active"{% endif %}>Live</a>
+                <a href="/settings" {% if request.path == '/settings' %}class="active"{% endif %}>Settings</a>
+                <a href="/health" {% if request.path == '/health' %}class="active"{% endif %}>Health</a>
+            </div>
+        </nav>
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <script src="/static/js/hls.min.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
