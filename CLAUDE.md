@@ -6,6 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Raspberry Pi birdhouse camera system — LAN-only, browser-based live HLS stream with web UI. Runs on Raspberry Pi OS Lite (Bookworm) with a Pi Camera 3 NoIR.
 
+- **Repository**: https://github.com/ruiterer/Vogelhuis
+- **Branch**: `main`
+
 ## Stack
 
 - **Streaming**: rpicam-vid (hardware H.264) → ffmpeg (HLS segmenter, `-c:v copy`) → tmpfs
@@ -47,3 +50,7 @@ sudo bash update.sh           # deploy changes
 - Minimize SD card writes (HLS on tmpfs, limited logging)
 - Support 3 concurrent browser viewers
 - All config changes must survive reboots (persisted to YAML)
+- Valid resolutions: `480p`, `720p`, `1080p`; valid framerates: `5`, `15`, `25`, `30`
+- Config validation lives in `src/config.py` — update `validate()` when adding new settings
+- nginx serves `/hls/` and `/snapshots/` directly; only API/UI routes go through Flask
+- Shell scripts read YAML config via Python one-liners (no separate config format)
