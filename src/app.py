@@ -18,10 +18,8 @@ app = Flask(__name__)
 _last_snapshot_time = 0
 SNAPSHOT_MIN_INTERVAL = 3  # seconds between snapshots
 
-# Configure structured logging for the web service
-log_config = cfg.load()
-_log_path = os.path.join(log_config["system"]["log_path"], "web.log")
-_handler = logging.FileHandler(_log_path)
+# Configure structured logging to stderr (systemd captures it to web.log)
+_handler = logging.StreamHandler()
 _handler.setFormatter(logging.Formatter(
     "%(asctime)s [%(levelname)s] [web] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",

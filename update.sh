@@ -37,6 +37,9 @@ info "Updating nginx config..."
 cp "${REPO_DIR}/nginx/birdcam.conf" /etc/nginx/sites-available/birdcam
 nginx -t
 
+info "Fixing log file permissions..."
+chown -R birdcam:birdcam /var/log/birdcam
+
 info "Restarting services..."
 systemctl start birdcam-stream
 systemctl start birdcam-web
