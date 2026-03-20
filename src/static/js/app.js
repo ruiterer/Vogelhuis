@@ -232,7 +232,8 @@ function initSettings() {
 /* --- Health --- */
 
 function initHealth() {
-    async function poll() {
+    // --- Health metrics polling ---
+    async function pollHealth() {
         try {
             const resp = await fetch("/api/health");
             const d = await resp.json();
@@ -260,8 +261,91 @@ function initHealth() {
         } catch (e) { /* ignore */ }
     }
 
-    poll();
-    setInterval(poll, 5000);
+    pollHealth();
+    setInterval(pollHealth, 5000);
+
+    // --- Log viewer ---
+    if (document.getElementById("log-viewer")) initLogViewer();
+}
+
+function initLogViewer() {
+    const container = document.getElementById("log-entries");
+    const statusEl = document.getElementById("log-status");
+    const sourceSelect = document.getElementById("log-source");
+    const levelSelect = document.getElementById("log-level");
+    const periodSelect = document.getElementById("log-period");
+    const downloadBtn = document.getElementById("btn-download-logs");
+
+    let currentLogs = [];
+
+    function buildUrl() {
+        const params = new URLSearchParams();
+        if (sourceSelect.value) params.set("source", sourceSelect.value);
+        if (levelSelect.value) params.set("level", levelSelect.value);
+        if (periodSelect.value) params.set("minutes", periodSelect.value);
+        return "/api/logs?" + params.toString();
+    }
+
+    function renderLogs(entries) {
+        if (entries.length === 0) {
+            container.innerHTML = '<div class="log-line" style="color:#888;">No log entries match the current filters.</div>';
+            statusEl.textContent = "0 entries";
+            return;
+        }
+
+        container.innerHTML = entries.map(e => {
+            const ts = e.timestamp ? `<span class="log-ts">${e.timestamp}</span> ` : "";
+            const lvl = `<span class="log-lvl-${e.level}">[${e.level}]</span>`;
+            const src = `<span class="log-src">[${e.source}]</span>`;
+            const msg = `<span class="log-msg">${escapeHtml(e.message)}</span>`;
+            return `<div class="log-line">${ts}${lvl} ${src} ${msg}</div>`;
+        }).join("");
+
+        statusEl.textContent = `${entries.length} entries`;
+    }
+
+    async function pollLogs() {
+        try {
+            const resp = await fetch(buildUrl());
+            currentLogs = await resp.json();
+            renderLogs(currentLogs);
+        } catch (e) {
+            statusEl.textContent = "Failed to load logs";
+        }
+    }
+
+    // Poll on filter change
+    sourceSelect.addEventListener("change", pollLogs);
+    levelSelect.addEventListener("change", pollLogs);
+    periodSelect.addEventListener("change", pollLogs);
+
+    // Download filtered logs as text file
+    downloadBtn.addEventListener("click", () => {
+        if (currentLogs.length === 0) return;
+        const text = currentLogs.map(e => {
+            const ts = e.timestamp || "                   ";
+            return `${ts} [${e.level}] [${e.source}] ${e.message}`;
+        }).join("\n");
+
+        const blob = new Blob([text], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const now = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+        a.download = `birdcam-logs-${now}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+
+    // Initial load + auto-refresh
+    pollLogs();
+    setInterval(pollLogs, 5000);
+}
+
+function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
 }
 
 function setText(id, text) {

@@ -10,6 +10,7 @@ from flask import Flask, render_template, jsonify, request, send_from_directory,
 import config as cfg
 from health import get_full_health
 from snapshot import take_snapshot, list_snapshots
+from logs import get_logs
 
 app = Flask(__name__)
 
@@ -17,7 +18,21 @@ app = Flask(__name__)
 _last_snapshot_time = 0
 SNAPSHOT_MIN_INTERVAL = 3  # seconds between snapshots
 
+# Configure structured logging for the web service
+log_config = cfg.load()
+_log_path = os.path.join(log_config["system"]["log_path"], "web.log")
+_handler = logging.FileHandler(_log_path)
+_handler.setFormatter(logging.Formatter(
+    "%(asctime)s [%(levelname)s] [web] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+))
+_handler.addFilter(lambda record: setattr(record, 'levelname',
+    {'WARNING': 'WARN', 'CRITICAL': 'ERROR'}.get(record.levelname, record.levelname)
+) or True)
+
 logger = logging.getLogger("birdcam")
+logger.setLevel(logging.INFO)
+logger.addHandler(_handler)
 
 
 # --- Pages ---
@@ -125,6 +140,15 @@ def api_config_put():
     cfg.save(current)
     logger.info("Configuration updated")
     return jsonify({"status": "saved", "restart_required": _stream_config_changed(new_config)})
+
+
+@app.route("/api/logs")
+def api_logs():
+    source = request.args.get("source")  # stream, web, cleanup, or None
+    level = request.args.get("level")    # INFO, WARN, ERROR, or None
+    minutes = request.args.get("minutes", type=int)  # last N minutes, or None
+    entries = get_logs(source=source, level=level, minutes=minutes)
+    return jsonify(entries)
 
 
 @app.route("/api/restart-stream", methods=["POST"])

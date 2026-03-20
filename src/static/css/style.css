@@ -296,6 +296,73 @@ h2 { font-size: 18px; margin: 24px 0 12px; color: var(--text); }
 
 .health-note { font-size: 13px; color: var(--text-muted); margin-top: 16px; }
 
+/* --- Log viewer --- */
+
+.log-viewer {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.log-filters {
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.log-filters label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.log-filters select {
+    display: block;
+    margin-top: 2px;
+    padding: 5px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 13px;
+    background: var(--bg);
+}
+
+.log-entries {
+    height: 400px;
+    overflow-y: auto;
+    font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 8px 0;
+    background: #1a1a2e;
+    color: #e0e0e0;
+}
+
+.log-line {
+    padding: 1px 16px;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.log-line:hover { background: rgba(255,255,255,0.05); }
+
+.log-line .log-ts { color: #888; }
+.log-line .log-src { color: #7aa2f7; }
+.log-line .log-lvl-INFO { color: #9ece6a; }
+.log-line .log-lvl-WARN { color: #e0af68; }
+.log-line .log-lvl-ERROR { color: #f7768e; font-weight: 600; }
+.log-line .log-msg { color: #c0caf5; }
+
+.log-status {
+    padding: 6px 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+}
+
 /* --- Responsive --- */
 
 @media (max-width: 600px) {
