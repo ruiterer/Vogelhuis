@@ -43,6 +43,7 @@ install_system_packages() {
 
     info "Installing system packages..."
     apt-get install -y -qq \
+        curl \
         ffmpeg \
         nginx \
         python3-venv \

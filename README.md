@@ -22,17 +22,29 @@ A Raspberry Pi birdhouse camera system with live HLS streaming and a browser-bas
 
 ### 1. Prepare the Pi
 
-Install Raspberry Pi OS Lite (Bookworm) on an SD card using [Raspberry Pi Imager](https://www.raspberrypi.com/software/). Enable SSH and configure Wi-Fi during imaging.
+Install Raspberry Pi OS Lite (Bookworm) on an SD card using [Raspberry Pi Imager](https://www.raspberrypi.com/software/). During imaging:
 
-### 2. Install Birdcam
+- Enable SSH
+- Configure Wi-Fi (if not using Ethernet)
+- Set hostname (e.g., `birdcam`)
 
-SSH into the Pi, then:
+### 2. Install Prerequisites
+
+SSH into the Pi, then install `git` and `curl` (not included in Pi OS Lite by default):
+
+```bash
+sudo apt update && sudo apt install -y git curl
+```
+
+### 3. Install Birdcam
 
 ```bash
 git clone https://github.com/ruiterer/Vogelhuis.git
 cd Vogelhuis
 sudo bash install.sh
 ```
+
+The install script handles all remaining dependencies (ffmpeg, nginx, Python venv, rpicam-apps, hls.js).
 
 ### 3. Open in Browser
 
