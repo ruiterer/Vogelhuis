@@ -11,17 +11,6 @@ log_info()  { echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] [stream] $*" >&2; }
 log_warn()  { echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] [stream] $*" >&2; }
 log_error() { echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] [stream] $*" >&2; }
 
-# Tag external tool output with timestamps and detected severity
-tag_output() {
-    while IFS= read -r line; do
-        [ -z "$line" ] && continue
-        local level="INFO"
-        if [[ "$line" == *WARN* ]] || [[ "$line" == *warn* ]]; then level="WARN"; fi
-        if [[ "$line" == *ERROR* ]] || [[ "$line" == *error* ]] || [[ "$line" == *fatal* ]]; then level="ERROR"; fi
-        echo "$(date '+%Y-%m-%d %H:%M:%S') [$level] [stream] $line"
-    done
-}
-
 # Read a config value using Python + PyYAML
 get_config() {
     python3 -c "
@@ -63,19 +52,19 @@ rm -f "${HLS_PATH}"/*.ts "${HLS_PATH}"/*.m3u8
 # Trap signals for clean shutdown
 cleanup() {
     log_info "Stream stopping"
+    # Kill all processes in our process group
     kill -- -$$ 2>/dev/null || true
+    # Also kill rpicam-vid specifically in case it escaped the group
+    pkill -f "rpicam-vid.*--camera 0" 2>/dev/null || true
     rm -f "${HLS_PATH}"/*.ts "${HLS_PATH}"/*.m3u8
     log_info "Stream stopped"
 }
 trap cleanup EXIT INT TERM
 
-# Save original stderr fd for tagged output from left side of pipe
-exec 3>&2
-
 # Start the pipeline
 # rpicam-vid: capture H.264 from camera using hardware encoder
 # ffmpeg: remux into HLS segments (no re-encoding, copy only)
-# stderr from both is tagged with timestamps and severity
+# stderr from both tools goes directly to the log (captured by systemd)
 rpicam-vid \
     --camera 0 \
     --codec h264 \
@@ -89,7 +78,6 @@ rpicam-vid \
     --nopreview \
     --timeout 0 \
     --output - \
-    2> >(tag_output >&3) \
   | ffmpeg \
     -hide_banner \
     -loglevel warning \
@@ -101,5 +89,4 @@ rpicam-vid \
     -hls_list_size "$PLAYLIST_SIZE" \
     -hls_flags delete_segments+temp_file \
     -hls_segment_filename "${HLS_PATH}/seg_%03d.ts" \
-    "${HLS_PATH}/stream.m3u8" \
-    2> >(tag_output >&2)
+    "${HLS_PATH}/stream.m3u8"
