@@ -55,7 +55,7 @@ Raspberry Pi birdhouse camera system — LAN-only, browser-based live HLS stream
 - The `birdcam` system user runs all services, with sudoers for stream restart
 - All service logging goes to stderr, captured by systemd journal — no direct FileHandler (avoids permission issues)
 - Stream service has no WatchdogSec (bash pipelines can't send sd_notify pings)
-- Stream script uses explicit `pkill -f rpicam-vid` cleanup to prevent "Device busy" errors from orphaned processes
+- Stream script uses explicit `pkill -f rpicam-vid` cleanup + 2s delay to prevent "Device busy" errors on restart
 - GPIO integration is planned for future (sensors, IR control) — keep architecture modular
 
 ## Testing on Pi
@@ -72,7 +72,7 @@ sudo bash update.sh           # deploy changes
 - Minimize SD card writes (HLS on tmpfs, structured logging with configurable retention)
 - Support 3 concurrent browser viewers
 - All config changes must survive reboots (persisted to YAML)
-- Valid resolutions: `480p`, `720p`, `1080p`; valid framerates: `5`, `15`, `25`, `30`
+- Valid resolutions: `480p`, `720p`, `1080p`; valid framerates: `5`, `15`, `25`, `30`; valid rotations: `0`, `180`
 - Config validation lives in `src/config.py` — update `validate()` when adding new settings
 - nginx serves `/hls/` and `/snapshots/` directly; only API/UI routes go through Flask
 - Shell scripts read YAML config via Python one-liners (no separate config format)
