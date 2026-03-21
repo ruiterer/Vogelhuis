@@ -58,6 +58,8 @@ cleanup() {
     # Also kill rpicam-vid specifically in case it escaped the group
     pkill -f "rpicam-vid.*--camera 0" 2>/dev/null || true
     rm -f "${HLS_PATH}"/*.ts "${HLS_PATH}"/*.m3u8
+    # Wait for camera device to be released before exiting
+    sleep 2
     log_info "Stream stopped"
 }
 trap cleanup EXIT INT TERM

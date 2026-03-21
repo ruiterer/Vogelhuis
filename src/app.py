@@ -156,7 +156,7 @@ def api_restart_stream():
     try:
         result = subprocess.run(
             ["sudo", "systemctl", "restart", "birdcam-stream"],
-            capture_output=True, text=True, timeout=15,
+            capture_output=True, text=True, timeout=30,
         )
         if result.returncode == 0:
             logger.info("Stream service restarted")
