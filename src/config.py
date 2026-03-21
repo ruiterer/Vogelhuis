@@ -10,6 +10,7 @@ DEFAULTS = {
     "stream": {
         "resolution": "720p",
         "framerate": 25,
+        "rotation": 0,
     },
     "ui": {
         "title": "Birdcam",
@@ -38,6 +39,7 @@ RESOLUTION_MAP = {
 }
 
 VALID_FRAMERATES = [5, 15, 25, 30]
+VALID_ROTATIONS = [0, 180]
 VALID_RESOLUTIONS = list(RESOLUTION_MAP.keys())
 
 
@@ -84,6 +86,10 @@ def validate(config):
     fps = config.get("stream", {}).get("framerate", 25)
     if fps not in VALID_FRAMERATES:
         errors.append(f"Invalid framerate: {fps}. Must be one of {VALID_FRAMERATES}")
+
+    rotation = config.get("stream", {}).get("rotation", 0)
+    if rotation not in VALID_ROTATIONS:
+        errors.append(f"Invalid rotation: {rotation}. Must be one of {VALID_ROTATIONS}")
 
     threshold = config.get("snapshots", {}).get("min_free_disk_percent", 10)
     if not (1 <= threshold <= 50):

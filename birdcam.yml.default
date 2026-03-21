@@ -6,6 +6,8 @@ stream:
   resolution: "720p"
   # Framerate: 5, 15, 25, 30
   framerate: 25
+  # Rotation: 0 or 180 degrees
+  rotation: 0
 
 ui:
   title: "Birdcam"

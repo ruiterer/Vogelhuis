@@ -113,6 +113,8 @@ def api_config_put():
             current["stream"]["resolution"] = s["resolution"]
         if "framerate" in s:
             current["stream"]["framerate"] = int(s["framerate"])
+        if "rotation" in s:
+            current["stream"]["rotation"] = int(s["rotation"])
 
     if "ui" in new_config:
         if "title" in new_config["ui"]:
@@ -169,7 +171,8 @@ def _stream_config_changed(new_config):
     """Check if stream-related config was changed (requires service restart)."""
     if "stream" not in new_config:
         return False
-    return "resolution" in new_config["stream"] or "framerate" in new_config["stream"]
+    s = new_config["stream"]
+    return "resolution" in s or "framerate" in s or "rotation" in s
 
 
 # --- Error handlers ---

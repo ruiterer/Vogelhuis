@@ -23,6 +23,10 @@
                     {% endfor %}
                 </select>
             </label>
+            <label class="toggle-label">
+                Rotate 180°
+                <input type="checkbox" name="stream.rotation" value="180" {% if config.stream.rotation == 180 %}checked{% endif %}>
+            </label>
             <p class="hint">Changing stream settings will briefly interrupt the live stream.</p>
         </section>
 

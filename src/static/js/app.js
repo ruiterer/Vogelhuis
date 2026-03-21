@@ -178,6 +178,13 @@ function initSettings() {
             obj[parts[parts.length - 1]] = (value !== "" && !isNaN(num) && parts[parts.length - 1] !== "title" && parts[parts.length - 1] !== "timezone" && parts[parts.length - 1] !== "path") ? num : value;
         }
 
+        // Handle unchecked checkboxes (rotation: 0 when unchecked)
+        const rotationCheckbox = form.querySelector('[name="stream.rotation"]');
+        if (rotationCheckbox && !rotationCheckbox.checked) {
+            config.stream = config.stream || {};
+            config.stream.rotation = 0;
+        }
+
         try {
             const resp = await fetch("/api/config", {
                 method: "PUT",

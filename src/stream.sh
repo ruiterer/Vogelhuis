@@ -34,13 +34,14 @@ get_dimensions() {
 # Load configuration
 RESOLUTION=$(get_config "c['stream']['resolution']")
 FRAMERATE=$(get_config "c['stream']['framerate']")
+ROTATION=$(get_config "c.get('stream', {}).get('rotation', 0)")
 HLS_PATH=$(get_config "c['hls']['path']")
 SEGMENT_DURATION=$(get_config "c['hls']['segment_duration']")
 PLAYLIST_SIZE=$(get_config "c['hls']['playlist_size']")
 
 read -r WIDTH HEIGHT <<< "$(get_dimensions "$RESOLUTION")"
 
-log_info "Stream starting: ${WIDTH}x${HEIGHT} @ ${FRAMERATE}fps"
+log_info "Stream starting: ${WIDTH}x${HEIGHT} @ ${FRAMERATE}fps, rotation=${ROTATION}"
 log_info "HLS output: ${HLS_PATH}/stream.m3u8"
 
 # Ensure HLS output directory exists (tmpfs)
@@ -71,6 +72,7 @@ rpicam-vid \
     --width "$WIDTH" \
     --height "$HEIGHT" \
     --framerate "$FRAMERATE" \
+    --rotation "$ROTATION" \
     --bitrate 0 \
     --profile main \
     --level 4.2 \
