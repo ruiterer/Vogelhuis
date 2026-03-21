@@ -6,6 +6,9 @@ import subprocess
 import psutil
 
 from config import load as load_config
+from logging_setup import get_logger
+
+logger = get_logger("health")
 
 
 def get_cpu_percent():
@@ -71,7 +74,8 @@ def get_service_status(service_name):
             capture_output=True, text=True, timeout=5,
         )
         return result.stdout.strip()
-    except (subprocess.TimeoutExpired, FileNotFoundError):
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        logger.warning("Service %s status check failed: %s", service_name, e)
         return "unknown"
 
 
@@ -86,6 +90,7 @@ def get_camera_status():
 
     age = time.time() - os.path.getmtime(playlist)
     if age > 10:
+        logger.warning("HLS playlist stale (%ds)", int(age))
         return {"status": "stale", "detail": f"Playlist not updated for {int(age)}s"}
 
     return {"status": "online", "detail": "Stream active"}

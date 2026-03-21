@@ -4,6 +4,10 @@ import copy
 import os
 import yaml
 
+from logging_setup import get_logger
+
+logger = get_logger("config")
+
 CONFIG_PATH = os.environ.get("BIRDCAM_CONFIG", "/etc/birdcam/birdcam.yml")
 
 DEFAULTS = {
@@ -69,6 +73,7 @@ def save(config):
     os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
     with open(CONFIG_PATH, "w") as f:
         yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+    logger.info("Configuration saved")
 
 
 def get_resolution_dimensions(resolution_str):
@@ -99,4 +104,6 @@ def validate(config):
     if not (1 <= retention <= 3650):
         errors.append(f"retention_days must be between 1 and 3650, got {retention}")
 
+    if errors:
+        logger.warning("Validation failed: %s", "; ".join(errors))
     return errors

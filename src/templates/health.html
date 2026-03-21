@@ -60,9 +60,9 @@
                 Source
                 <select id="log-source">
                     <option value="">All</option>
-                    <option value="stream">Stream</option>
-                    <option value="web">Web</option>
-                    <option value="cleanup">Cleanup</option>
+                    {% for src in sources %}
+                    <option value="{{ src }}">{{ src | capitalize }}</option>
+                    {% endfor %}
                 </select>
             </label>
             <label>
@@ -77,12 +77,14 @@
             <label>
                 Period
                 <select id="log-period">
-                    <option value="1">Last minute</option>
+                    <option value="5">Last 5 minutes</option>
                     <option value="10" selected>Last 10 minutes</option>
+                    <option value="30">Last 30 minutes</option>
                     <option value="60">Last hour</option>
-                    <option value="1440">Last 24 hours</option>
-                    <option value="">All</option>
                 </select>
+            </label>
+            <label class="log-toggle">
+                <input type="checkbox" id="log-verbose"> Verbose
             </label>
             <button id="btn-download-logs" class="btn" title="Download filtered logs">Download</button>
         </div>

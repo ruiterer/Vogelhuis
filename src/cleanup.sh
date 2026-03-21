@@ -6,9 +6,9 @@ set -euo pipefail
 
 CONFIG="/etc/birdcam/birdcam.yml"
 
-log_info()  { echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] [cleanup] $*"; }
-log_warn()  { echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] [cleanup] $*"; }
-log_error() { echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] [cleanup] $*"; }
+log_info()  { echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] [cleanup] $*" >&2; }
+log_warn()  { echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] [cleanup] $*" >&2; }
+log_error() { echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] [cleanup] $*" >&2; }
 
 get_config() {
     python3 -c "

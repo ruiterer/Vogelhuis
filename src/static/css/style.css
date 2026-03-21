@@ -356,6 +356,21 @@ h2 { font-size: 18px; margin: 24px 0 12px; color: var(--text); }
 .log-line .log-lvl-ERROR { color: #f7768e; font-weight: 600; }
 .log-line .log-msg { color: #c0caf5; }
 
+.log-line.log-unstructured { opacity: 0.55; }
+
+.log-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.log-toggle input { margin: 0; cursor: pointer; }
+
 .log-status {
     padding: 6px 16px;
     font-size: 12px;

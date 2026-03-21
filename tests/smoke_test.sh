@@ -60,6 +60,55 @@ curl -sf http://127.0.0.1/api/health | python3 -c "import sys,json;json.load(sys
     && pass "Health API returns valid JSON" || fail "Health API broken"
 
 echo ""
+echo "[Logging]"
+
+# Verify log API returns valid JSON array with required fields
+log_json=$(curl -sf http://127.0.0.1/api/logs?minutes=60 2>/dev/null)
+if echo "$log_json" | python3 -c "import sys,json;json.load(sys.stdin)" 2>/dev/null; then
+    pass "Log API returns valid JSON"
+else
+    fail "Log API broken"
+fi
+
+# Verify log entries have required fields
+echo "$log_json" | python3 -c "
+import sys, json
+entries = json.load(sys.stdin)
+if not entries:
+    print('  no entries to check')
+    sys.exit(0)
+required = {'timestamp', 'level', 'source', 'message', 'unstructured'}
+for e in entries[:5]:
+    missing = required - set(e.keys())
+    if missing:
+        print(f'  missing fields: {missing}')
+        sys.exit(1)
+" 2>/dev/null && pass "Log entries have required fields" || fail "Log entries missing fields"
+
+# Verify log entries are chronologically sorted
+echo "$log_json" | python3 -c "
+import sys, json
+entries = json.load(sys.stdin)
+timestamps = [e['timestamp'] for e in entries]
+if timestamps != sorted(timestamps):
+    sys.exit(1)
+" 2>/dev/null && pass "Log entries sorted chronologically" || fail "Log entries not sorted"
+
+# Verify source filter works
+source_json=$(curl -sf "http://127.0.0.1/api/logs?source=web&minutes=60" 2>/dev/null)
+echo "$source_json" | python3 -c "
+import sys, json
+entries = json.load(sys.stdin)
+for e in entries:
+    if e['source'] != 'web':
+        sys.exit(1)
+" 2>/dev/null && pass "Source filter works" || fail "Source filter broken"
+
+# Verify verbose toggle works (should include unstructured lines)
+curl -sf "http://127.0.0.1/api/logs?verbose=1&minutes=60" | python3 -c "import sys,json;json.load(sys.stdin)" 2>/dev/null \
+    && pass "Verbose mode works" || fail "Verbose mode broken"
+
+echo ""
 echo "[HLS Stream]"
 
 # Wait for stream to produce segments if it just started

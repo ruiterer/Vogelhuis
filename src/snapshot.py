@@ -7,6 +7,9 @@ import time
 from datetime import datetime
 
 from config import load as load_config
+from logging_setup import get_logger
+
+logger = get_logger("snapshot")
 
 
 def _get_latest_segment():
@@ -44,6 +47,7 @@ def take_snapshot():
 
     segment = _get_latest_segment()
     if not segment:
+        logger.error("No HLS segment available — is the camera running?")
         raise RuntimeError("No HLS segment available — is the camera running?")
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -63,11 +67,14 @@ def take_snapshot():
     )
 
     if result.returncode != 0:
+        logger.error("ffmpeg snapshot failed: %s", result.stderr.strip())
         raise RuntimeError(f"ffmpeg snapshot failed: {result.stderr}")
 
     if not os.path.exists(output_path):
+        logger.error("Snapshot file was not created")
         raise RuntimeError("Snapshot file was not created")
 
+    logger.info("Snapshot captured: %s", filename)
     return filename
 
 

@@ -281,6 +281,7 @@ function initLogViewer() {
     const sourceSelect = document.getElementById("log-source");
     const levelSelect = document.getElementById("log-level");
     const periodSelect = document.getElementById("log-period");
+    const verboseCheck = document.getElementById("log-verbose");
     const downloadBtn = document.getElementById("btn-download-logs");
 
     let currentLogs = [];
@@ -290,6 +291,7 @@ function initLogViewer() {
         if (sourceSelect.value) params.set("source", sourceSelect.value);
         if (levelSelect.value) params.set("level", levelSelect.value);
         if (periodSelect.value) params.set("minutes", periodSelect.value);
+        if (verboseCheck.checked) params.set("verbose", "1");
         return "/api/logs?" + params.toString();
     }
 
@@ -301,12 +303,16 @@ function initLogViewer() {
         }
 
         container.innerHTML = entries.map(e => {
-            const ts = e.timestamp ? `<span class="log-ts">${e.timestamp}</span> ` : "";
+            const cls = e.unstructured ? "log-line log-unstructured" : "log-line";
+            const ts = `<span class="log-ts">${e.timestamp}</span> `;
             const lvl = `<span class="log-lvl-${e.level}">[${e.level}]</span>`;
             const src = `<span class="log-src">[${e.source}]</span>`;
             const msg = `<span class="log-msg">${escapeHtml(e.message)}</span>`;
-            return `<div class="log-line">${ts}${lvl} ${src} ${msg}</div>`;
+            return `<div class="${cls}">${ts}${lvl} ${src} ${msg}</div>`;
         }).join("");
+
+        // Auto-scroll to bottom (newest entries)
+        container.scrollTop = container.scrollHeight;
 
         statusEl.textContent = `${entries.length} entries`;
     }
@@ -325,13 +331,13 @@ function initLogViewer() {
     sourceSelect.addEventListener("change", pollLogs);
     levelSelect.addEventListener("change", pollLogs);
     periodSelect.addEventListener("change", pollLogs);
+    verboseCheck.addEventListener("change", pollLogs);
 
     // Download filtered logs as text file
     downloadBtn.addEventListener("click", () => {
         if (currentLogs.length === 0) return;
         const text = currentLogs.map(e => {
-            const ts = e.timestamp || "                   ";
-            return `${ts} [${e.level}] [${e.source}] ${e.message}`;
+            return `${e.timestamp} [${e.level}] [${e.source}] ${e.message}`;
         }).join("\n");
 
         const blob = new Blob([text], { type: "text/plain" });

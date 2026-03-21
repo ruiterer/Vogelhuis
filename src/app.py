@@ -3,14 +3,14 @@
 import os
 import subprocess
 import time
-import logging
 
 from flask import Flask, render_template, jsonify, request, send_from_directory, abort
 
 import config as cfg
 from health import get_full_health
 from snapshot import take_snapshot, list_snapshots
-from logs import get_logs
+from logs import get_logs, get_sources
+from logging_setup import get_logger
 
 app = Flask(__name__)
 
@@ -18,19 +18,7 @@ app = Flask(__name__)
 _last_snapshot_time = 0
 SNAPSHOT_MIN_INTERVAL = 3  # seconds between snapshots
 
-# Configure structured logging to stderr (systemd captures it to web.log)
-_handler = logging.StreamHandler()
-_handler.setFormatter(logging.Formatter(
-    "%(asctime)s [%(levelname)s] [web] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-))
-_handler.addFilter(lambda record: setattr(record, 'levelname',
-    {'WARNING': 'WARN', 'CRITICAL': 'ERROR'}.get(record.levelname, record.levelname)
-) or True)
-
-logger = logging.getLogger("birdcam")
-logger.setLevel(logging.INFO)
-logger.addHandler(_handler)
+logger = get_logger("web")
 
 
 # --- Pages ---
@@ -52,7 +40,7 @@ def settings():
 @app.route("/health")
 def health_page():
     conf = cfg.load()
-    return render_template("health.html", config=conf)
+    return render_template("health.html", config=conf, sources=get_sources())
 
 
 # --- API ---
@@ -144,10 +132,11 @@ def api_config_put():
 
 @app.route("/api/logs")
 def api_logs():
-    source = request.args.get("source")  # stream, web, cleanup, or None
-    level = request.args.get("level")    # INFO, WARN, ERROR, or None
-    minutes = request.args.get("minutes", type=int)  # last N minutes, or None
-    entries = get_logs(source=source, level=level, minutes=minutes)
+    source = request.args.get("source")
+    level = request.args.get("level")
+    minutes = request.args.get("minutes", type=int)
+    verbose = request.args.get("verbose", "").lower() in ("1", "true", "yes")
+    entries = get_logs(source=source, level=level, minutes=minutes, verbose=verbose)
     return jsonify(entries)
 
 
