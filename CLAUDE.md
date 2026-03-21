@@ -38,7 +38,7 @@ Raspberry Pi birdhouse camera system — LAN-only, browser-based live HLS stream
 | `logs.py` | Log file parsing, structured log reading with filters |
 | `snapshot.py` | Snapshot capture from HLS segments via ffmpeg |
 | `stream.sh` | rpicam-vid → ffmpeg HLS pipeline |
-| `cleanup.sh` | Hourly snapshot/log retention management |
+| `cleanup.sh` | Hourly snapshot/log retention (age-based + disk space threshold) |
 
 ## Web UI & API
 
@@ -55,7 +55,8 @@ Raspberry Pi birdhouse camera system — LAN-only, browser-based live HLS stream
 - The `birdcam` system user runs all services, with sudoers for stream restart
 - All service logging goes to stderr, captured by systemd journal — no direct FileHandler (avoids permission issues)
 - Stream service has no WatchdogSec (bash pipelines can't send sd_notify pings)
-- Stream script uses explicit `pkill -f rpicam-vid` cleanup + 2s delay to prevent "Device busy" errors on restart
+- Stream service uses `KillMode=control-group` + `ExecStartPre` pkill to ensure clean camera release on restart
+- rpicam-vid creates kernel threads that can zombie — always kill before restarting, never run rpicam-hello while stream is active
 - GPIO integration is planned for future (sensors, IR control) — keep architecture modular
 
 ## Testing on Pi
