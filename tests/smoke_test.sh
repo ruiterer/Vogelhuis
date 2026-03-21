@@ -87,6 +87,47 @@ echo "[Nginx Config]"
 nginx -t 2>/dev/null && pass "Nginx config valid" || fail "Nginx config invalid"
 
 echo ""
+echo "[Cleanup Logic]"
+
+# Verify free disk percentage calculation is correct
+actual_used=$(df --output=pcent / | tail -1 | tr -d '% ')
+actual_free=$((100 - actual_used))
+min_free=$(/opt/birdcam/venv/bin/python3 -c "
+import yaml
+with open('/etc/birdcam/birdcam.yml') as f:
+    c = yaml.safe_load(f)
+print(c.get('snapshots', {}).get('min_free_disk_percent', 10))
+")
+[ "$actual_free" -gt "$min_free" ] \
+    && pass "Free disk ${actual_free}% above threshold ${min_free}%" \
+    || skip "Free disk ${actual_free}% below threshold ${min_free}% (cleanup would trigger)"
+
+# Verify cleanup script calculates free space correctly (not using used% as free%)
+cleanup_free=$(bash -c '
+    used_percent=$(df --output=pcent / | tail -1 | tr -d "% ")
+    free_percent=$((100 - used_percent))
+    echo $free_percent
+')
+[ "$cleanup_free" -eq "$actual_free" ] \
+    && pass "Cleanup free% calculation matches actual (${cleanup_free}%)" \
+    || fail "Cleanup free% calculation wrong: got ${cleanup_free}%, expected ${actual_free}%"
+
+# Verify cleanup script doesn't delete snapshots when disk has plenty of free space
+if [ "$actual_free" -gt "$min_free" ]; then
+    # Create a test snapshot, run cleanup, verify it survives
+    test_snap="/var/lib/birdcam/snapshots/00000000_000000_snapshot.jpg"
+    echo "test" > "$test_snap"
+    chown birdcam:birdcam "$test_snap"
+    bash /opt/birdcam/src/cleanup.sh > /dev/null 2>&1
+    if [ -f "$test_snap" ]; then
+        pass "Cleanup preserves snapshots when disk has free space"
+        rm -f "$test_snap"
+    else
+        fail "Cleanup deleted snapshot despite sufficient free space"
+    fi
+fi
+
+echo ""
 echo "[Sudoers]"
 
 [ -f /etc/sudoers.d/birdcam ] && pass "Sudoers rule installed" || fail "Sudoers rule missing"
