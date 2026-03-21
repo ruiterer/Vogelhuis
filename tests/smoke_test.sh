@@ -62,6 +62,12 @@ curl -sf http://127.0.0.1/api/health | python3 -c "import sys,json;json.load(sys
 echo ""
 echo "[HLS Stream]"
 
+# Wait briefly for stream to produce segments if it just started
+if [ ! -f /dev/shm/birdcam/stream.m3u8 ] && systemctl is-active birdcam-stream >/dev/null 2>&1; then
+    echo "  Waiting for HLS segments..."
+    sleep 10
+fi
+
 if [ -f /dev/shm/birdcam/stream.m3u8 ]; then
     pass "HLS playlist exists"
     segment_count=$(ls /dev/shm/birdcam/seg_*.ts 2>/dev/null | wc -l)
@@ -75,7 +81,9 @@ fi
 echo ""
 echo "[Camera]"
 
-if rpicam-hello --list-cameras 2>/dev/null | grep -q "Available"; then
+if systemctl is-active birdcam-stream >/dev/null 2>&1 && [ -f /dev/shm/birdcam/stream.m3u8 ]; then
+    pass "Camera in use by active stream (skipping rpicam-hello)"
+elif rpicam-hello --list-cameras --timeout 3000 2>/dev/null | grep -q "Available"; then
     pass "Camera detected by libcamera"
 else
     skip "Camera not detected (may not be connected)"
