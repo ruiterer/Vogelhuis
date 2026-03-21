@@ -35,8 +35,8 @@ fi
 
 # --- Snapshot cleanup by disk space ---
 if [ -d "$SNAP_PATH" ]; then
-    free_percent=$(df --output=pcent / | tail -1 | tr -d '% ')
-    used_percent=$((100 - free_percent))
+    used_percent=$(df --output=pcent / | tail -1 | tr -d '% ')
+    free_percent=$((100 - used_percent))
 
     if [ "$free_percent" -lt "$MIN_FREE_PERCENT" ]; then
         log_warn "Free disk space ${free_percent}% below threshold ${MIN_FREE_PERCENT}%, cleaning snapshots"
@@ -49,7 +49,8 @@ if [ -d "$SNAP_PATH" ]; then
             fi
             rm -f "$oldest"
             log_info "Deleted $oldest"
-            free_percent=$(df --output=pcent / | tail -1 | tr -d '% ')
+            used_percent=$(df --output=pcent / | tail -1 | tr -d '% ')
+            free_percent=$((100 - used_percent))
         done
         log_info "Free disk space now at ${free_percent}%"
     fi
