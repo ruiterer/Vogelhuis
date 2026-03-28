@@ -1,0 +1,20 @@
+[Unit]
+Description=Birdcam GPIO & Sensor Service
+After=network.target
+Wants=birdcam-stream.service
+
+[Service]
+Type=simple
+User=birdcam
+Group=birdcam
+WorkingDirectory=/opt/birdcam/src
+ExecStart=/opt/birdcam/venv/bin/python /opt/birdcam/src/gpio_service.py
+Restart=on-failure
+RestartSec=5
+StartLimitBurst=5
+StartLimitIntervalSec=300
+StandardOutput=append:/var/log/birdcam/gpio.log
+StandardError=append:/var/log/birdcam/gpio.log
+
+[Install]
+WantedBy=multi-user.target

@@ -14,7 +14,16 @@
         <div class="stream-actions">
             <button id="btn-snapshot" class="btn" title="Take snapshot">Snapshot</button>
             <button id="btn-fullscreen" class="btn" title="Fullscreen">Fullscreen</button>
+            <button id="btn-light" class="btn gpio-toggle" data-target="light" title="Toggle light">Light</button>
+            <button id="btn-ir-light" class="btn gpio-toggle" data-target="ir-light" title="Toggle IR light">IR Light</button>
+            <button id="btn-fan" class="btn gpio-toggle" data-target="fan" title="Toggle fan">Fan</button>
         </div>
+    </div>
+    <div class="sensor-readings" id="sensor-readings">
+        <span class="sensor-item" id="sr-temp" title="Birdhouse temperature">Temp: --</span>
+        <span class="sensor-item" id="sr-humidity" title="Birdhouse humidity">Humidity: --</span>
+        <span class="sensor-item" id="sr-cpu" title="CPU temperature">CPU: --</span>
+        <span class="sensor-item" id="sr-motion" title="Motion status">Motion: --</span>
     </div>
     <div id="snapshot-toast" class="toast hidden"></div>
 </div>

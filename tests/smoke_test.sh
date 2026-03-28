@@ -38,7 +38,7 @@ echo "[Python Dependencies]"
 echo ""
 echo "[System Services]"
 
-for svc in birdcam-stream birdcam-web nginx; do
+for svc in birdcam-stream birdcam-web birdcam-gpio nginx; do
     status=$(systemctl is-active "$svc" 2>/dev/null)
     if [ "$status" = "active" ]; then
         pass "$svc is active"
@@ -107,6 +107,33 @@ for e in entries:
 # Verify verbose toggle works (should include unstructured lines)
 curl -sf "http://127.0.0.1/api/logs?verbose=1&minutes=60" | python3 -c "import sys,json;json.load(sys.stdin)" 2>/dev/null \
     && pass "Verbose mode works" || fail "Verbose mode broken"
+
+echo ""
+echo "[GPIO & Sensors]"
+
+[ -f /var/lib/birdcam/sensor_data.db ] && pass "Sensor database exists" || fail "Sensor database missing"
+
+curl -sf http://127.0.0.1/api/gpio/status | python3 -c "import sys,json;json.load(sys.stdin)" 2>/dev/null \
+    && pass "GPIO status API returns valid JSON" || fail "GPIO status API broken"
+
+curl -sf "http://127.0.0.1/api/sensor-data?minutes=1" | python3 -c "import sys,json;json.load(sys.stdin)" 2>/dev/null \
+    && pass "Sensor data API returns valid JSON" || fail "Sensor data API broken"
+
+curl -sf "http://127.0.0.1/api/motion-events?minutes=1" | python3 -c "import sys,json;json.load(sys.stdin)" 2>/dev/null \
+    && pass "Motion events API returns valid JSON" || fail "Motion events API broken"
+
+curl -sf -o /dev/null http://127.0.0.1/graphs \
+    && pass "Graphs page reachable" || fail "Graphs page not reachable"
+
+# Verify settings page has GPIO fields
+curl -sf http://127.0.0.1/settings | grep -q "gpio.pins.ir_light" \
+    && pass "Settings page has GPIO fields" || fail "Settings page missing GPIO fields"
+
+# Verify index page has GPIO controls
+curl -sf http://127.0.0.1/ | grep -q "btn-light" \
+    && pass "Stream page has GPIO controls" || fail "Stream page missing GPIO controls"
+
+[ -f /var/log/birdcam/gpio.log ] && pass "GPIO log file exists" || skip "GPIO log file not yet created"
 
 echo ""
 echo "[HLS Stream]"

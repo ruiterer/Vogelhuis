@@ -28,3 +28,42 @@ hls:
   segment_duration: 2
   playlist_size: 5
   path: "/dev/shm/birdcam"
+
+gpio:
+  enabled: true
+  # Sensor polling interval in seconds (10-300)
+  sensor_poll_interval: 60
+  # GPIO pin assignments (BCM numbering, 0-27)
+  pins:
+    ir_light: 13
+    light: 19
+    fan: 22
+    dht22: 4
+    motion: 7
+  # Fan auto-control thresholds (CPU temperature in °C)
+  fan:
+    on_temp: 50
+    off_temp: 40
+  # Complementary light schedule (HH:MM)
+  # Night: IR on + light off, Day: IR off + light on
+  light_schedule:
+    night_start: "21:15"
+    day_start: "06:30"
+  # Motion detection
+  motion:
+    # Minimum seconds between logged motion events
+    cooldown: 30
+  # Delete sensor data older than this many days
+  data_retention_days: 30
+
+mqtt:
+  enabled: false
+  # MQTT broker hostname or IP address
+  broker: ""
+  port: 1883
+  topic: "birdcam/status"
+  # Values included in the MQTT payload
+  location: "Tuin"
+  object_name: "Vogelhuis_Boom"
+  # Publish interval in seconds
+  publish_interval: 60

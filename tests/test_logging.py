@@ -36,7 +36,7 @@ class TestSourceRegistry:
     """SOURCE_FILE_MAP is the single source of truth for log sources."""
 
     def test_known_sources_present(self):
-        expected = {"stream", "web", "cleanup", "snapshot", "health", "config"}
+        expected = {"stream", "web", "cleanup", "snapshot", "health", "config", "gpio"}
         assert expected == set(SOURCE_FILE_MAP.keys())
 
     def test_all_values_are_log_filenames(self):
@@ -231,6 +231,9 @@ class TestGetLogs:
         (tmp_path / "cleanup.log").write_text(
             "2026-03-20 14:00:05 [INFO] [cleanup] Cleanup complete\n"
         )
+        (tmp_path / "gpio.log").write_text(
+            "2026-03-20 14:00:06 [INFO] [gpio] GPIO service started\n"
+        )
 
         # Patch the bound reference in logs module (not config module)
         import config
@@ -251,6 +254,7 @@ class TestGetLogs:
         assert "stream" in sources
         assert "web" in sources
         assert "cleanup" in sources
+        assert "gpio" in sources
 
     def test_filter_by_source_stream(self):
         entries = get_logs(source="stream")
@@ -358,6 +362,7 @@ class TestFlaskLogAPI:
             "2026-03-20 14:00:02 [INFO] [snapshot] Snap taken\n"
         )
         (tmp_path / "cleanup.log").write_text("")
+        (tmp_path / "gpio.log").write_text("")
 
         import config
         import logs

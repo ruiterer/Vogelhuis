@@ -1,5 +1,6 @@
 """Birdcam — Flask web application."""
 
+import json
 import os
 import subprocess
 import time
@@ -7,6 +8,7 @@ import time
 from flask import Flask, render_template, jsonify, request, send_from_directory, abort
 
 import config as cfg
+from database import get_sensor_data, get_motion_events, get_latest_reading
 from health import get_full_health
 from snapshot import take_snapshot, list_snapshots
 from logs import get_logs, get_sources
@@ -17,6 +19,10 @@ app = Flask(__name__)
 # Simple rate limiting for snapshot endpoint
 _last_snapshot_time = 0
 SNAPSHOT_MIN_INTERVAL = 3  # seconds between snapshots
+
+# GPIO command file (shared with gpio_service via /dev/shm)
+GPIO_COMMAND_FILE = "/dev/shm/birdcam/gpio_commands"
+GPIO_STATUS_FILE = "/dev/shm/birdcam/gpio_status.json"
 
 logger = get_logger("web")
 
@@ -41,6 +47,12 @@ def settings():
 def health_page():
     conf = cfg.load()
     return render_template("health.html", config=conf, sources=get_sources())
+
+
+@app.route("/graphs")
+def graphs_page():
+    conf = cfg.load()
+    return render_template("graphs.html", config=conf)
 
 
 # --- API ---
@@ -121,13 +133,65 @@ def api_config_put():
         if "timezone" in new_config["system"]:
             current["system"]["timezone"] = str(new_config["system"]["timezone"])[:50]
 
+    # GPIO config
+    if "gpio" in new_config:
+        g = new_config["gpio"]
+        gpio = current["gpio"]
+        if "enabled" in g:
+            gpio["enabled"] = bool(g["enabled"])
+        if "sensor_poll_interval" in g:
+            gpio["sensor_poll_interval"] = int(g["sensor_poll_interval"])
+        if "pins" in g:
+            for pin_name in ("ir_light", "light", "fan", "dht22", "motion"):
+                if pin_name in g["pins"]:
+                    gpio["pins"][pin_name] = int(g["pins"][pin_name])
+        if "fan" in g:
+            if "on_temp" in g["fan"]:
+                gpio["fan"]["on_temp"] = int(g["fan"]["on_temp"])
+            if "off_temp" in g["fan"]:
+                gpio["fan"]["off_temp"] = int(g["fan"]["off_temp"])
+        if "light_schedule" in g:
+            for key in ("night_start", "day_start"):
+                if key in g["light_schedule"]:
+                    gpio["light_schedule"][key] = str(g["light_schedule"][key])[:5]
+        if "motion" in g:
+            if "cooldown" in g["motion"]:
+                gpio["motion"]["cooldown"] = int(g["motion"]["cooldown"])
+        if "data_retention_days" in g:
+            gpio["data_retention_days"] = int(g["data_retention_days"])
+
+    # MQTT config
+    if "mqtt" in new_config:
+        m = new_config["mqtt"]
+        mqtt = current["mqtt"]
+        if "enabled" in m:
+            mqtt["enabled"] = bool(m["enabled"])
+        if "broker" in m:
+            mqtt["broker"] = str(m["broker"])[:200]
+        if "port" in m:
+            mqtt["port"] = int(m["port"])
+        if "topic" in m:
+            mqtt["topic"] = str(m["topic"])[:200]
+        if "location" in m:
+            mqtt["location"] = str(m["location"])[:100]
+        if "object_name" in m:
+            mqtt["object_name"] = str(m["object_name"])[:100]
+        if "publish_interval" in m:
+            mqtt["publish_interval"] = int(m["publish_interval"])
+
     errors = cfg.validate(current)
     if errors:
         return jsonify({"error": errors}), 400
 
     cfg.save(current)
     logger.info("Configuration updated")
-    return jsonify({"status": "saved", "restart_required": _stream_config_changed(new_config)})
+
+    gpio_restart = _gpio_config_changed(new_config)
+    return jsonify({
+        "status": "saved",
+        "restart_required": _stream_config_changed(new_config),
+        "gpio_restart_required": gpio_restart,
+    })
 
 
 @app.route("/api/logs")
@@ -156,12 +220,106 @@ def api_restart_stream():
         return jsonify({"error": "Restart command timed out"}), 500
 
 
+# --- GPIO API ---
+
+@app.route("/api/gpio/status")
+def api_gpio_status():
+    """Return current GPIO/sensor state from the status file."""
+    try:
+        with open(GPIO_STATUS_FILE, "r") as f:
+            status = json.load(f)
+        return jsonify(status)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return jsonify({
+            "light": False, "ir_light": False, "fan": False, "fan_auto": True,
+            "motion": False, "temperature": None, "humidity": None,
+            "cpu_temp": None, "cpu_load": None, "timestamp": None,
+            "service_running": False,
+        })
+
+
+@app.route("/api/gpio/light", methods=["POST"])
+def api_gpio_light():
+    return _send_gpio_command("light")
+
+
+@app.route("/api/gpio/ir-light", methods=["POST"])
+def api_gpio_ir_light():
+    return _send_gpio_command("ir_light")
+
+
+@app.route("/api/gpio/fan", methods=["POST"])
+def api_gpio_fan():
+    return _send_gpio_command("fan")
+
+
+@app.route("/api/restart-gpio", methods=["POST"])
+def api_restart_gpio():
+    try:
+        result = subprocess.run(
+            ["sudo", "systemctl", "restart", "birdcam-gpio"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.returncode == 0:
+            logger.info("GPIO service restarted")
+            return jsonify({"status": "restarting"})
+        else:
+            return jsonify({"error": result.stderr}), 500
+    except subprocess.TimeoutExpired:
+        return jsonify({"error": "Restart command timed out"}), 500
+
+
+def _send_gpio_command(target):
+    """Send a command to the GPIO service via the command file."""
+    data = request.get_json()
+    if data is None or "state" not in data:
+        return jsonify({"error": "Missing 'state' in request body"}), 400
+
+    state = bool(data["state"])
+    cmd = json.dumps({"target": target, "state": state}) + "\n"
+
+    try:
+        os.makedirs(os.path.dirname(GPIO_COMMAND_FILE), exist_ok=True)
+        with open(GPIO_COMMAND_FILE, "a") as f:
+            f.write(cmd)
+        logger.info("GPIO command: %s = %s", target, state)
+        return jsonify({"status": "ok", "target": target, "state": state})
+    except (PermissionError, OSError) as e:
+        logger.error("Failed to send GPIO command: %s", e)
+        return jsonify({"error": "GPIO service not available"}), 503
+
+
+# --- Sensor data API ---
+
+@app.route("/api/sensor-data")
+def api_sensor_data():
+    """Return sensor time-series data for graphs."""
+    minutes = request.args.get("minutes", 1440, type=int)
+    minutes = max(1, min(minutes, 43200))  # 1 min to 30 days
+    data = get_sensor_data(minutes)
+    return jsonify(data)
+
+
+@app.route("/api/motion-events")
+def api_motion_events():
+    """Return motion events for the requested period."""
+    minutes = request.args.get("minutes", 1440, type=int)
+    minutes = max(1, min(minutes, 43200))
+    events = get_motion_events(minutes)
+    return jsonify(events)
+
+
 def _stream_config_changed(new_config):
     """Check if stream-related config was changed (requires service restart)."""
     if "stream" not in new_config:
         return False
     s = new_config["stream"]
     return "resolution" in s or "framerate" in s or "rotation" in s
+
+
+def _gpio_config_changed(new_config):
+    """Check if GPIO-related config was changed (requires service restart)."""
+    return "gpio" in new_config or "mqtt" in new_config
 
 
 # --- Error handlers ---

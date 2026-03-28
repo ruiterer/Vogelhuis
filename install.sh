@@ -13,6 +13,7 @@ HLS_DIR="/dev/shm/birdcam"
 VENV_DIR="${APP_DIR}/venv"
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 HLS_JS_VERSION="1.5.13"
+CHARTJS_VERSION="4.4.7"
 
 # --- Helpers ---
 
@@ -48,6 +49,8 @@ install_system_packages() {
         nginx \
         python3-venv \
         python3-pip \
+        python3-libgpiod \
+        libgpiod-dev \
         rpicam-apps \
         > /dev/null
 
@@ -62,8 +65,8 @@ create_user() {
         ok "Created system user 'birdcam'"
     fi
 
-    # Add birdcam user to video group (camera access)
-    usermod -aG video birdcam
+    # Add birdcam user to video group (camera access) and gpio group
+    usermod -aG video,gpio birdcam
 }
 
 setup_directories() {
@@ -74,9 +77,12 @@ setup_directories() {
 
 install_python_env() {
     info "Setting up Python virtual environment..."
-    python3 -m venv "$VENV_DIR"
+    python3 -m venv --system-site-packages "$VENV_DIR"
     "${VENV_DIR}/bin/pip" install --quiet --upgrade pip
     "${VENV_DIR}/bin/pip" install --quiet -r "${REPO_DIR}/requirements.txt"
+    # GPIO and sensor libraries (Pi-only, may fail on other platforms)
+    "${VENV_DIR}/bin/pip" install --quiet gpiod adafruit-circuitpython-dht 2>/dev/null || \
+        info "GPIO/DHT libraries install skipped (install manually on Pi if needed)"
     ok "Python environment ready"
 }
 
@@ -92,13 +98,26 @@ install_hlsjs() {
     local js_dir="${APP_DIR}/src/static/js"
     if [ -f "${js_dir}/hls.min.js" ] && [ -s "${js_dir}/hls.min.js" ]; then
         info "hls.js already present"
-        return
+    else
+        info "Downloading hls.js v${HLS_JS_VERSION}..."
+        curl -sL "https://cdn.jsdelivr.net/npm/hls.js@${HLS_JS_VERSION}/dist/hls.min.js" \
+            -o "${js_dir}/hls.min.js"
+        chown birdcam:birdcam "${js_dir}/hls.min.js"
+        ok "hls.js installed"
     fi
-    info "Downloading hls.js v${HLS_JS_VERSION}..."
-    curl -sL "https://cdn.jsdelivr.net/npm/hls.js@${HLS_JS_VERSION}/dist/hls.min.js" \
-        -o "${js_dir}/hls.min.js"
-    chown birdcam:birdcam "${js_dir}/hls.min.js"
-    ok "hls.js installed"
+}
+
+install_chartjs() {
+    local js_dir="${APP_DIR}/src/static/js"
+    if [ -f "${js_dir}/chart.min.js" ] && [ -s "${js_dir}/chart.min.js" ]; then
+        info "Chart.js already present"
+    else
+        info "Downloading Chart.js v${CHARTJS_VERSION}..."
+        curl -sL "https://cdn.jsdelivr.net/npm/chart.js@${CHARTJS_VERSION}/dist/chart.umd.min.js" \
+            -o "${js_dir}/chart.min.js"
+        chown birdcam:birdcam "${js_dir}/chart.min.js"
+        ok "Chart.js installed"
+    fi
 }
 
 install_config() {
@@ -119,6 +138,7 @@ install_systemd_units() {
 
     systemctl enable birdcam-stream.service
     systemctl enable birdcam-web.service
+    systemctl enable birdcam-gpio.service
     systemctl enable birdcam-cleanup.timer
 
     ok "Systemd units installed and enabled"
@@ -144,8 +164,10 @@ setup_sudoers() {
     cat > "$sudoers_file" <<'EOF'
 # Allow birdcam user to restart its own stream service
 birdcam ALL=(ALL) NOPASSWD: /bin/systemctl restart birdcam-stream
+birdcam ALL=(ALL) NOPASSWD: /bin/systemctl restart birdcam-gpio
 birdcam ALL=(ALL) NOPASSWD: /bin/systemctl status birdcam-stream
 birdcam ALL=(ALL) NOPASSWD: /bin/systemctl status birdcam-web
+birdcam ALL=(ALL) NOPASSWD: /bin/systemctl status birdcam-gpio
 birdcam ALL=(ALL) NOPASSWD: /bin/systemctl status nginx
 EOF
     chmod 440 "$sudoers_file"
@@ -168,6 +190,7 @@ start_services() {
     info "Starting services..."
     systemctl start birdcam-stream
     systemctl start birdcam-web
+    systemctl start birdcam-gpio
     systemctl start birdcam-cleanup.timer
     systemctl restart nginx
     ok "All services started"
@@ -183,6 +206,7 @@ print_summary() {
     echo ""
     echo "  Live stream:  http://${ip}/"
     echo "  Settings:     http://${ip}/settings"
+    echo "  Graphs:       http://${ip}/graphs"
     echo "  Health:       http://${ip}/health"
     echo ""
     echo "  Config file:  ${CONFIG_FILE}"
@@ -210,6 +234,7 @@ main() {
     install_python_env
     install_app_files
     install_hlsjs
+    install_chartjs
     install_config
     install_systemd_units
     install_nginx

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block subtitle %}Graphs{% endblock %}
+{% block content %}
+<div class="graphs-container" id="graphs-page">
+    <h1>Sensor Graphs</h1>
+
+    <div class="graph-controls">
+        <div class="time-range-buttons">
+            <button class="btn time-btn" data-minutes="60">1h</button>
+            <button class="btn time-btn" data-minutes="360">6h</button>
+            <button class="btn time-btn" data-minutes="720">12h</button>
+            <button class="btn time-btn active" data-minutes="1440">24h</button>
+            <button class="btn time-btn" data-minutes="10080">7d</button>
+            <button class="btn time-btn" data-minutes="43200">30d</button>
+        </div>
+    </div>
+
+    <div class="graph-section">
+        <h2>Temperature</h2>
+        <div class="chart-wrapper">
+            <canvas id="chart-temperature"></canvas>
+        </div>
+    </div>
+
+    <div class="graph-section">
+        <h2>Humidity</h2>
+        <div class="chart-wrapper">
+            <canvas id="chart-humidity"></canvas>
+        </div>
+    </div>
+
+    <div class="graph-section">
+        <h2>Motion Activity</h2>
+        <div class="chart-wrapper">
+            <canvas id="chart-motion"></canvas>
+        </div>
+    </div>
+
+    <p class="health-note">Auto-refreshes every 60 seconds.</p>
+</div>
+{% endblock %}

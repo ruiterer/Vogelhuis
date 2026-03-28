@@ -108,6 +108,7 @@ def get_full_health():
         "services": {
             "birdcam-stream": get_service_status("birdcam-stream"),
             "birdcam-web": get_service_status("birdcam-web"),
+            "birdcam-gpio": get_service_status("birdcam-gpio"),
             "nginx": get_service_status("nginx"),
         },
     }

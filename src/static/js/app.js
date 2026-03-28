@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("video-player")) initPlayer();
     if (document.getElementById("settings-form")) initSettings();
     if (document.getElementById("health-dashboard")) initHealth();
+    if (document.getElementById("graphs-page")) initGraphs();
 });
 
 /* --- Clock --- */
@@ -120,6 +121,12 @@ function initPlayer() {
         else if (wrapper.webkitRequestFullscreen) wrapper.webkitRequestFullscreen();
     });
 
+    // GPIO toggle buttons
+    initGpioToggles();
+
+    // Sensor readings
+    initSensorReadings();
+
     // Load snapshots
     loadSnapshots();
 }
@@ -152,6 +159,73 @@ async function loadSnapshots() {
     }
 }
 
+/* --- GPIO Toggle Buttons --- */
+
+function initGpioToggles() {
+    const buttons = document.querySelectorAll(".gpio-toggle");
+    buttons.forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const target = btn.dataset.target;
+            const isOn = btn.classList.contains("on");
+            const newState = !isOn;
+
+            btn.disabled = true;
+            try {
+                const resp = await fetch(`/api/gpio/${target}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ state: newState }),
+                });
+                if (resp.ok) {
+                    btn.classList.toggle("on", newState);
+                } else {
+                    const data = await resp.json();
+                    showToast(data.error || "GPIO command failed", true);
+                }
+            } catch (e) {
+                showToast("GPIO request failed", true);
+            }
+            btn.disabled = false;
+        });
+    });
+}
+
+/* --- Sensor Readings --- */
+
+function initSensorReadings() {
+    async function poll() {
+        try {
+            const resp = await fetch("/api/gpio/status");
+            const d = await resp.json();
+
+            setText("sr-temp", d.temperature !== null ? `Temp: ${d.temperature}°C` : "Temp: --");
+            setText("sr-humidity", d.humidity !== null ? `Humidity: ${d.humidity}%` : "Humidity: --");
+            setText("sr-cpu", d.cpu_temp !== null ? `CPU: ${d.cpu_temp}°C` : "CPU: --");
+
+            const motionEl = document.getElementById("sr-motion");
+            if (motionEl) {
+                motionEl.textContent = d.motion ? "Motion: Active" : "Motion: --";
+                motionEl.className = "sensor-item" + (d.motion ? " motion-active" : "");
+            }
+
+            // Update GPIO button states
+            updateGpioButton("btn-light", d.light);
+            updateGpioButton("btn-ir-light", d.ir_light);
+            updateGpioButton("btn-fan", d.fan);
+        } catch (e) { /* ignore */ }
+    }
+
+    poll();
+    setInterval(poll, 5000);
+}
+
+function updateGpioButton(id, state) {
+    const btn = document.getElementById(id);
+    if (btn) {
+        btn.classList.toggle("on", !!state);
+    }
+}
+
 /* --- Settings --- */
 
 function initSettings() {
@@ -173,16 +247,39 @@ function initSettings() {
                 obj[parts[i]] = obj[parts[i]] || {};
                 obj = obj[parts[i]];
             }
-            // Try to parse numbers
+            const lastKey = parts[parts.length - 1];
+            // Fields that should remain as strings
+            const stringFields = ["title", "timezone", "path", "night_start", "day_start",
+                                  "broker", "topic", "location", "object_name"];
             const num = Number(value);
-            obj[parts[parts.length - 1]] = (value !== "" && !isNaN(num) && parts[parts.length - 1] !== "title" && parts[parts.length - 1] !== "timezone" && parts[parts.length - 1] !== "path") ? num : value;
+            obj[lastKey] = (value !== "" && !isNaN(num) && !stringFields.includes(lastKey)) ? num : value;
         }
 
-        // Handle unchecked checkboxes (rotation: 0 when unchecked)
+        // Handle unchecked checkboxes
         const rotationCheckbox = form.querySelector('[name="stream.rotation"]');
         if (rotationCheckbox && !rotationCheckbox.checked) {
             config.stream = config.stream || {};
             config.stream.rotation = 0;
+        }
+
+        // Handle GPIO enabled checkbox
+        const gpioCheckbox = form.querySelector('[name="gpio.enabled"]');
+        if (gpioCheckbox && !gpioCheckbox.checked) {
+            config.gpio = config.gpio || {};
+            config.gpio.enabled = false;
+        } else if (gpioCheckbox && gpioCheckbox.checked) {
+            config.gpio = config.gpio || {};
+            config.gpio.enabled = true;
+        }
+
+        // Handle MQTT enabled checkbox
+        const mqttCheckbox = form.querySelector('[name="mqtt.enabled"]');
+        if (mqttCheckbox && !mqttCheckbox.checked) {
+            config.mqtt = config.mqtt || {};
+            config.mqtt.enabled = false;
+        } else if (mqttCheckbox && mqttCheckbox.checked) {
+            config.mqtt = config.mqtt || {};
+            config.mqtt.enabled = true;
         }
 
         try {
@@ -195,8 +292,12 @@ function initSettings() {
             if (resp.ok) {
                 status.textContent = "Saved!";
                 status.className = "save-status ok";
-                if (data.restart_required) {
+                if (data.restart_required && data.gpio_restart_required) {
+                    status.textContent = "Saved! Restart camera stream and GPIO service to apply changes.";
+                } else if (data.restart_required) {
                     status.textContent = "Saved! Restart the camera stream to apply changes.";
+                } else if (data.gpio_restart_required) {
+                    status.textContent = "Saved! Restart the GPIO service to apply changes.";
                 }
             } else {
                 status.textContent = (data.error || "Save failed");
@@ -234,6 +335,35 @@ function initSettings() {
             btnRestart.disabled = false;
         }
     });
+
+    // Restart GPIO button
+    const btnRestartGpio = document.getElementById("btn-restart-gpio");
+    if (btnRestartGpio) {
+        btnRestartGpio.addEventListener("click", async () => {
+            if (!confirm("Restart the GPIO service? Sensor readings will be interrupted briefly.")) return;
+            btnRestartGpio.disabled = true;
+            btnRestartGpio.textContent = "Restarting...";
+            try {
+                const resp = await fetch("/api/restart-gpio", { method: "POST" });
+                const data = await resp.json();
+                if (resp.ok) {
+                    btnRestartGpio.textContent = "Restarted!";
+                    setTimeout(() => {
+                        btnRestartGpio.textContent = "Restart GPIO Service";
+                        btnRestartGpio.disabled = false;
+                    }, 5000);
+                } else {
+                    alert("Restart failed: " + (data.error || "Unknown error"));
+                    btnRestartGpio.textContent = "Restart GPIO Service";
+                    btnRestartGpio.disabled = false;
+                }
+            } catch (e) {
+                alert("Restart request failed");
+                btnRestartGpio.textContent = "Restart GPIO Service";
+                btnRestartGpio.disabled = false;
+            }
+        });
+    }
 }
 
 /* --- Health --- */
@@ -353,6 +483,155 @@ function initLogViewer() {
     // Initial load + auto-refresh
     pollLogs();
     setInterval(pollLogs, 5000);
+}
+
+/* --- Graphs --- */
+
+function initGraphs() {
+    let currentMinutes = 1440;
+    let charts = {};
+
+    // Time range buttons
+    document.querySelectorAll(".time-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".time-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            currentMinutes = parseInt(btn.dataset.minutes);
+            loadGraphData();
+        });
+    });
+
+    function createChart(canvasId, config) {
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) return null;
+        return new Chart(ctx, config);
+    }
+
+    function formatTime(ts) {
+        // Handle both ISO and space-separated timestamps
+        const d = new Date(ts.replace(" ", "T"));
+        if (currentMinutes <= 720) {
+            return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        }
+        return d.toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    }
+
+    function destroyCharts() {
+        Object.values(charts).forEach(c => { if (c) c.destroy(); });
+        charts = {};
+    }
+
+    async function loadGraphData() {
+        try {
+            const [sensorResp, motionResp] = await Promise.all([
+                fetch(`/api/sensor-data?minutes=${currentMinutes}`),
+                fetch(`/api/motion-events?minutes=${currentMinutes}`),
+            ]);
+            const sensorData = await sensorResp.json();
+            const motionEvents = await motionResp.json();
+
+            destroyCharts();
+
+            const labels = sensorData.map(d => formatTime(d.timestamp));
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { intersect: false, mode: "index" },
+                plugins: { legend: { position: "top" } },
+                scales: {
+                    x: {
+                        ticks: {
+                            maxTicksLimit: 12,
+                            maxRotation: 0,
+                        },
+                    },
+                },
+            };
+
+            // Temperature chart
+            charts.temperature = createChart("chart-temperature", {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: "Birdhouse (°C)",
+                            data: sensorData.map(d => d.temperature),
+                            borderColor: "#e0af68",
+                            backgroundColor: "rgba(224,175,104,0.1)",
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0,
+                        },
+                        {
+                            label: "CPU (°C)",
+                            data: sensorData.map(d => d.cpu_temp),
+                            borderColor: "#f7768e",
+                            backgroundColor: "rgba(247,118,142,0.1)",
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0,
+                        },
+                    ],
+                },
+                options: commonOptions,
+            });
+
+            // Humidity chart
+            charts.humidity = createChart("chart-humidity", {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Humidity (%)",
+                        data: sensorData.map(d => d.humidity),
+                        borderColor: "#7aa2f7",
+                        backgroundColor: "rgba(122,162,247,0.1)",
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 0,
+                    }],
+                },
+                options: commonOptions,
+            });
+
+            // Motion chart — bar chart counting events per time bucket
+            const motionLabels = motionEvents.map(e => formatTime(e.timestamp));
+            charts.motion = createChart("chart-motion", {
+                type: "bar",
+                data: {
+                    labels: motionLabels,
+                    datasets: [{
+                        label: "Motion Events",
+                        data: motionEvents.map(() => 1),
+                        backgroundColor: "rgba(158,206,106,0.6)",
+                        borderColor: "#9ece6a",
+                        borderWidth: 1,
+                    }],
+                },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                    },
+                },
+            });
+
+        } catch (e) {
+            console.error("Failed to load graph data:", e);
+        }
+    }
+
+    // Check if Chart.js is available
+    if (typeof Chart === "undefined") {
+        document.querySelector(".graphs-container").innerHTML =
+            '<h1>Sensor Graphs</h1><p style="color:var(--danger)">Chart.js not loaded. Run install.sh or update.sh to install it.</p>';
+        return;
+    }
+
+    loadGraphData();
+    setInterval(loadGraphData, 60000);
 }
 
 function escapeHtml(str) {

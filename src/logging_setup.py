@@ -17,6 +17,7 @@ SOURCE_FILE_MAP = {
     "snapshot": "web.log",
     "health": "web.log",
     "config": "web.log",
+    "gpio": "gpio.log",
 }
 
 _configured = set()
