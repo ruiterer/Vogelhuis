@@ -50,8 +50,8 @@ def take_snapshot():
         logger.error("No HLS segment available — is the camera running?")
         raise RuntimeError("No HLS segment available — is the camera running?")
 
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    filename = f"{timestamp}_snapshot.jpg"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"{timestamp}.jpg"
     output_path = os.path.join(snap_path, filename)
 
     result = subprocess.run(
@@ -87,12 +87,12 @@ def list_snapshots():
 
     files = []
     for f in os.listdir(snap_path):
-        if f.endswith("_snapshot.jpg"):
+        if f.endswith(".jpg"):
             full = os.path.join(snap_path, f)
             files.append({
                 "filename": f,
                 "size_kb": round(os.path.getsize(full) / 1024),
-                "timestamp": f.rsplit("_snapshot", 1)[0],
+                "timestamp": f.replace(".jpg", ""),
             })
 
     files.sort(key=lambda x: x["filename"], reverse=True)

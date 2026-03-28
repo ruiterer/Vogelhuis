@@ -202,7 +202,7 @@ cleanup_free=$(bash -c '
 # Verify cleanup script doesn't delete snapshots when disk has plenty of free space
 if [ "$actual_free" -gt "$min_free" ]; then
     # Create a test snapshot, run cleanup, verify it survives
-    test_snap="/var/lib/birdcam/snapshots/00000000_000000_snapshot.jpg"
+    test_snap="/var/lib/birdcam/snapshots/00000000_000000.jpg"
     echo "test" > "$test_snap"
     chown birdcam:birdcam "$test_snap"
     bash /opt/birdcam/src/cleanup.sh > /dev/null 2>&1

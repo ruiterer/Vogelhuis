@@ -27,7 +27,7 @@ LOG_RETENTION_DAYS=$(get_config "c['system']['log_retention_days']")
 
 # --- Snapshot retention by age ---
 if [ -d "$SNAP_PATH" ]; then
-    deleted=$(find "$SNAP_PATH" -name "*_snapshot.jpg" -mtime +"$RETENTION_DAYS" -delete -print | wc -l)
+    deleted=$(find "$SNAP_PATH" -name "*.jpg" -mtime +"$RETENTION_DAYS" -delete -print | wc -l)
     if [ "$deleted" -gt 0 ]; then
         log_info "Deleted $deleted snapshots older than $RETENTION_DAYS days"
     fi
@@ -42,7 +42,7 @@ if [ -d "$SNAP_PATH" ]; then
         log_warn "Free disk space ${free_percent}% below threshold ${MIN_FREE_PERCENT}%, cleaning snapshots"
         # Delete oldest snapshots until threshold is met or no snapshots remain
         while [ "$free_percent" -lt "$MIN_FREE_PERCENT" ]; do
-            oldest=$(ls -t "$SNAP_PATH"/*_snapshot.jpg 2>/dev/null | tail -1)
+            oldest=$(ls -t "$SNAP_PATH"/*.jpg 2>/dev/null | tail -1)
             if [ -z "$oldest" ]; then
                 log_warn "No more snapshots to delete, free space still at ${free_percent}%"
                 break

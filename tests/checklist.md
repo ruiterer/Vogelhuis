@@ -26,7 +26,7 @@ Run these checks on the Raspberry Pi after installation.
 - [ ] Snapshot file appears in "Recent Snapshots" section
 - [ ] Click snapshot filename — JPEG downloads
 - [ ] Downloaded image matches current stream resolution
-- [ ] Filename format: `YYYY-MM-DD_HH-MM-SS_snapshot.jpg`
+- [ ] Filename format: `YYYYMMDD_HHMMSS.jpg`
 - [ ] Rapid clicking shows rate limit message (max 1 per 3 seconds)
 
 ## Fullscreen

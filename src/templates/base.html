@@ -9,12 +9,12 @@
 <body>
     <header>
         <nav>
-            <a href="/" class="nav-title">{{ config.ui.title }}</a>
+            <a href="/" class="nav-title">🐦 {{ config.ui.title }}</a>
             <div class="nav-links">
                 <a href="/" {% if request.path == '/' %}class="active"{% endif %}>Live</a>
-                <a href="/settings" {% if request.path == '/settings' %}class="active"{% endif %}>Settings</a>
                 <a href="/graphs" {% if request.path == '/graphs' %}class="active"{% endif %}>Graphs</a>
                 <a href="/health" {% if request.path == '/health' %}class="active"{% endif %}>Health</a>
+                <a href="/settings" {% if request.path == '/settings' %}class="active"{% endif %}>Settings</a>
             </div>
         </nav>
     </header>

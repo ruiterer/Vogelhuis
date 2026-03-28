@@ -150,7 +150,10 @@ async function loadSnapshots() {
         }
         container.innerHTML = snapshots.slice(0, 12).map(s => `
             <div class="snapshot-card">
-                <a href="/snapshots/${s.filename}" download>${s.filename}</a>
+                <a href="/snapshots/${s.filename}" download>
+                    <img class="snapshot-thumb" src="/snapshots/${s.filename}" width="150" alt="Snapshot">
+                    <span class="snapshot-name">${s.filename}</span>
+                </a>
                 <div class="meta">${s.size_kb} KB</div>
             </div>
         `).join("");

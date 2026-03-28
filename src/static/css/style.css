@@ -174,7 +174,7 @@ h2 { font-size: 18px; margin: 24px 0 12px; color: var(--text); }
 
 .snapshots-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 12px;
 }
 
@@ -188,8 +188,26 @@ h2 { font-size: 18px; margin: 24px 0 12px; color: var(--text); }
 .snapshot-card a {
     color: var(--primary);
     text-decoration: none;
-    font-size: 13px;
-    word-break: break-all;
+    font-size: 12px;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.snapshot-thumb {
+    width: 150px;
+    height: auto;
+    border-radius: 4px;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.snapshot-name {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .snapshot-card .meta {

@@ -88,7 +88,7 @@ def download_snapshot(filename):
     conf = cfg.load()
     snap_path = conf["snapshots"]["path"]
     # Sanitize: only allow filenames matching expected pattern
-    if not filename.endswith("_snapshot.jpg") or "/" in filename:
+    if not filename.endswith(".jpg") or "/" in filename:
         abort(404)
     return send_from_directory(snap_path, filename, as_attachment=True)
 
