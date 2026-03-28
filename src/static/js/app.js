@@ -515,15 +515,6 @@ function initGraphs() {
         return new Chart(ctx, config);
     }
 
-    function formatTime(ts) {
-        // Handle both ISO and space-separated timestamps
-        const d = new Date(ts.replace(" ", "T"));
-        if (currentMinutes <= 720) {
-            return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-        }
-        return d.toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-    }
-
     function destroyCharts() {
         Object.values(charts).forEach(c => { if (c) c.destroy(); });
         charts = {};
@@ -540,31 +531,48 @@ function initGraphs() {
 
             destroyCharts();
 
-            const labels = sensorData.map(d => formatTime(d.timestamp));
+            const now = new Date();
+            const rangeStart = new Date(now.getTime() - currentMinutes * 60000);
+
+            const timeScaleX = {
+                type: "time",
+                min: rangeStart.toISOString(),
+                max: now.toISOString(),
+                time: {
+                    tooltipFormat: "MMM d, HH:mm",
+                    displayFormats: {
+                        minute: "HH:mm",
+                        hour: "HH:mm",
+                        day: "MMM d, HH:mm",
+                    },
+                },
+                ticks: {
+                    maxTicksLimit: 12,
+                    maxRotation: 0,
+                },
+            };
+
             const commonOptions = {
                 responsive: true,
                 maintainAspectRatio: false,
                 interaction: { intersect: false, mode: "index" },
                 plugins: { legend: { position: "top" } },
-                scales: {
-                    x: {
-                        ticks: {
-                            maxTicksLimit: 12,
-                            maxRotation: 0,
-                        },
-                    },
-                },
+                scales: { x: timeScaleX },
             };
+
+            // Convert timestamps to ISO for time scale
+            function toXY(data, field) {
+                return data.map(d => ({ x: d.timestamp.replace(" ", "T"), y: d[field] }));
+            }
 
             // Temperature chart
             charts.temperature = createChart("chart-temperature", {
                 type: "line",
                 data: {
-                    labels: labels,
                     datasets: [
                         {
                             label: "Birdhouse (°C)",
-                            data: sensorData.map(d => d.temperature),
+                            data: toXY(sensorData, "temperature"),
                             borderColor: "#e0af68",
                             backgroundColor: "rgba(224,175,104,0.1)",
                             fill: true,
@@ -573,7 +581,7 @@ function initGraphs() {
                         },
                         {
                             label: "CPU (°C)",
-                            data: sensorData.map(d => d.cpu_temp),
+                            data: toXY(sensorData, "cpu_temp"),
                             borderColor: "#f7768e",
                             backgroundColor: "rgba(247,118,142,0.1)",
                             fill: true,
@@ -589,10 +597,9 @@ function initGraphs() {
             charts.humidity = createChart("chart-humidity", {
                 type: "line",
                 data: {
-                    labels: labels,
                     datasets: [{
                         label: "Humidity (%)",
-                        data: sensorData.map(d => d.humidity),
+                        data: toXY(sensorData, "humidity"),
                         borderColor: "#7aa2f7",
                         backgroundColor: "rgba(122,162,247,0.1)",
                         fill: true,
@@ -602,10 +609,7 @@ function initGraphs() {
                 },
                 options: commonOptions,
             });
-
-            // Motion chart — bar chart with fixed time scale matching selected period
-            const now = new Date();
-            const rangeStart = new Date(now.getTime() - currentMinutes * 60000);
+            // Motion chart
             charts.motion = createChart("chart-motion", {
                 type: "bar",
                 data: {
@@ -621,23 +625,7 @@ function initGraphs() {
                 options: {
                     ...commonOptions,
                     scales: {
-                        x: {
-                            type: "time",
-                            min: rangeStart.toISOString(),
-                            max: now.toISOString(),
-                            time: {
-                                tooltipFormat: "MMM d, HH:mm",
-                                displayFormats: {
-                                    minute: "HH:mm",
-                                    hour: "HH:mm",
-                                    day: "MMM d, HH:mm",
-                                },
-                            },
-                            ticks: {
-                                maxTicksLimit: 12,
-                                maxRotation: 0,
-                            },
-                        },
+                        x: timeScaleX,
                         y: { beginAtZero: true, ticks: { stepSize: 1 } },
                     },
                 },
