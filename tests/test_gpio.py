@@ -239,7 +239,7 @@ class TestMqttValidation:
 # Fan control logic
 # ---------------------------------------------------------------------------
 
-from gpio_service import _state, _update_fan
+from gpio_service import _state, _update_fan, _process_commands, _write_status, STATUS_FILE
 
 
 class TestFanControlLogic:
@@ -290,6 +290,93 @@ class TestFanControlLogic:
         _state["fan"] = False
         _update_fan(config)
         assert _state["fan"] is False
+
+
+# ---------------------------------------------------------------------------
+# Complementary light command processing
+# ---------------------------------------------------------------------------
+
+
+class TestComplementaryLightCommands:
+    @pytest.fixture(autouse=True)
+    def reset_state_and_commands(self, tmp_path, monkeypatch):
+        _state["light"] = False
+        _state["ir_light"] = False
+        _state["light_override"] = None
+        _state["ir_light_override"] = None
+        _state["fan"] = False
+        _state["fan_override"] = None
+        # Use temp files for command/status IPC
+        self.cmd_file = str(tmp_path / "gpio_commands")
+        self.status_file = str(tmp_path / "gpio_status.json")
+        import gpio_service
+        monkeypatch.setattr(gpio_service, "COMMAND_FILE", self.cmd_file)
+        monkeypatch.setattr(gpio_service, "STATUS_FILE", self.status_file)
+        monkeypatch.setattr(gpio_service, "_output_lines", None)
+        yield
+
+    def _write_command(self, target, state):
+        with open(self.cmd_file, "a") as f:
+            f.write(json.dumps({"target": target, "state": state}) + "\n")
+
+    def test_light_on_turns_ir_off(self):
+        _state["ir_light"] = True
+        _state["ir_light_override"] = True
+        self._write_command("light", True)
+        _process_commands(make_config())
+        assert _state["light"] is True
+        assert _state["ir_light"] is False
+        assert _state["ir_light_override"] is False
+
+    def test_ir_on_turns_light_off(self):
+        _state["light"] = True
+        _state["light_override"] = True
+        self._write_command("ir_light", True)
+        _process_commands(make_config())
+        assert _state["ir_light"] is True
+        assert _state["light"] is False
+        assert _state["light_override"] is False
+
+    def test_light_off_does_not_affect_ir(self):
+        _state["ir_light"] = True
+        _state["ir_light_override"] = True
+        self._write_command("light", False)
+        _process_commands(make_config())
+        assert _state["light"] is False
+        assert _state["ir_light"] is True  # unchanged
+
+    def test_ir_off_does_not_affect_light(self):
+        _state["light"] = True
+        _state["light_override"] = True
+        self._write_command("ir_light", False)
+        _process_commands(make_config())
+        assert _state["ir_light"] is False
+        assert _state["light"] is True  # unchanged
+
+    def test_both_off_is_valid(self):
+        _state["light"] = True
+        _state["ir_light"] = True
+        self._write_command("light", False)
+        self._write_command("ir_light", False)
+        _process_commands(make_config())
+        assert _state["light"] is False
+        assert _state["ir_light"] is False
+
+    def test_status_file_written_after_command(self):
+        self._write_command("light", True)
+        _process_commands(make_config())
+        assert os.path.exists(self.status_file)
+        with open(self.status_file) as f:
+            status = json.load(f)
+        assert status["light"] is True
+        assert status["ir_light"] is False
+
+    def test_no_status_written_without_commands(self):
+        # Empty command file
+        with open(self.cmd_file, "w") as f:
+            f.write("")
+        _process_commands(make_config())
+        assert not os.path.exists(self.status_file)
 
 
 # ---------------------------------------------------------------------------

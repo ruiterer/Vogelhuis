@@ -178,6 +178,11 @@ function initGpioToggles() {
                 });
                 if (resp.ok) {
                     btn.classList.toggle("on", newState);
+                    // Complementary: turning one light on turns the other off
+                    if (newState) {
+                        if (target === "light") updateGpioButton("btn-ir-light", false);
+                        if (target === "ir-light") updateGpioButton("btn-light", false);
+                    }
                 } else {
                     const data = await resp.json();
                     showToast(data.error || "GPIO command failed", true);

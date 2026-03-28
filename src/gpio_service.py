@@ -115,6 +115,7 @@ def _init_gpio(config):
         )
         config_input = gpiod.LineSettings(
             direction=gpiod.line.Direction.INPUT,
+            bias=gpiod.line.Bias.PULL_DOWN,
             edge_detection=gpiod.line.Edge.BOTH,
             debounce_period=timedelta(milliseconds=50),
         )
@@ -510,6 +511,7 @@ def _process_commands(config):
 
     pins = config["gpio"]["pins"]
 
+    processed = False
     for line in commands:
         line = line.strip()
         if not line:
@@ -524,12 +526,24 @@ def _process_commands(config):
                 _state["light"] = state
                 _set_output(pins["light"], state)
                 logger.info("Light manually set %s", "ON" if state else "OFF")
+                # Complementary: turning light ON turns IR OFF
+                if state:
+                    _state["ir_light_override"] = False
+                    _state["ir_light"] = False
+                    _set_output(pins["ir_light"], False)
+                    logger.info("IR light OFF (complementary)")
 
             elif target == "ir_light":
                 _state["ir_light_override"] = state
                 _state["ir_light"] = state
                 _set_output(pins["ir_light"], state)
                 logger.info("IR light manually set %s", "ON" if state else "OFF")
+                # Complementary: turning IR ON turns light OFF
+                if state:
+                    _state["light_override"] = False
+                    _state["light"] = False
+                    _set_output(pins["light"], False)
+                    logger.info("Light OFF (complementary)")
 
             elif target == "fan":
                 _state["fan_override"] = state
@@ -537,8 +551,14 @@ def _process_commands(config):
                 _set_output(pins["fan"], state)
                 logger.info("Fan manually set %s", "ON" if state else "OFF")
 
+            processed = True
+
         except (json.JSONDecodeError, KeyError) as e:
             logger.warning("Invalid command: %s (%s)", line, e)
+
+    # Write status immediately so the web UI sees the change
+    if processed:
+        _write_status()
 
 
 # --- Status file (for web service to read) ---
