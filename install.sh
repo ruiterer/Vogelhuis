@@ -72,6 +72,8 @@ create_user() {
 setup_directories() {
     mkdir -p "$APP_DIR" "$CONFIG_DIR" "$LOG_DIR" "$SNAP_DIR" "$HLS_DIR"
     chown birdcam:birdcam "$LOG_DIR" "$SNAP_DIR" "$HLS_DIR"
+    # Database lives under /var/lib/birdcam — ensure birdcam can write there
+    chown birdcam:birdcam /var/lib/birdcam
     ok "Directories created"
 }
 
@@ -81,7 +83,7 @@ install_python_env() {
     "${VENV_DIR}/bin/pip" install --quiet --upgrade pip
     "${VENV_DIR}/bin/pip" install --quiet -r "${REPO_DIR}/requirements.txt"
     # GPIO and sensor libraries (Pi-only, may fail on other platforms)
-    "${VENV_DIR}/bin/pip" install --quiet gpiod adafruit-circuitpython-dht 2>/dev/null || \
+    "${VENV_DIR}/bin/pip" install --quiet gpiod RPi.GPIO adafruit-circuitpython-dht 2>/dev/null || \
         info "GPIO/DHT libraries install skipped (install manually on Pi if needed)"
     ok "Python environment ready"
 }

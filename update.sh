@@ -30,7 +30,7 @@ chown -R birdcam:birdcam "$APP_DIR"
 info "Updating Python dependencies..."
 "${APP_DIR}/venv/bin/pip" install --quiet -r "${REPO_DIR}/requirements.txt"
 # GPIO and sensor libraries (Pi-only)
-"${APP_DIR}/venv/bin/pip" install --quiet gpiod adafruit-circuitpython-dht 2>/dev/null || \
+"${APP_DIR}/venv/bin/pip" install --quiet gpiod RPi.GPIO adafruit-circuitpython-dht 2>/dev/null || \
     info "GPIO/DHT libraries install skipped"
 
 info "Installing Chart.js if missing..."
