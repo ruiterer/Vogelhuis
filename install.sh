@@ -14,6 +14,7 @@ VENV_DIR="${APP_DIR}/venv"
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 HLS_JS_VERSION="1.5.13"
 CHARTJS_VERSION="4.4.7"
+CHARTJS_DATE_ADAPTER_VERSION="3.0.0"
 
 # --- Helpers ---
 
@@ -119,6 +120,19 @@ install_chartjs() {
             -o "${js_dir}/chart.min.js"
         chown birdcam:birdcam "${js_dir}/chart.min.js"
         ok "Chart.js installed"
+    fi
+}
+
+install_chartjs_date_adapter() {
+    local js_dir="${APP_DIR}/src/static/js"
+    if [ -f "${js_dir}/chartjs-adapter-date-fns.bundle.min.js" ] && [ -s "${js_dir}/chartjs-adapter-date-fns.bundle.min.js" ]; then
+        info "Chart.js date adapter already present"
+    else
+        info "Downloading Chart.js date-fns adapter v${CHARTJS_DATE_ADAPTER_VERSION}..."
+        curl -sL "https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@${CHARTJS_DATE_ADAPTER_VERSION}/dist/chartjs-adapter-date-fns.bundle.min.js" \
+            -o "${js_dir}/chartjs-adapter-date-fns.bundle.min.js"
+        chown birdcam:birdcam "${js_dir}/chartjs-adapter-date-fns.bundle.min.js"
+        ok "Chart.js date adapter installed"
     fi
 }
 
@@ -237,6 +251,7 @@ main() {
     install_app_files
     install_hlsjs
     install_chartjs
+    install_chartjs_date_adapter
     install_config
     install_systemd_units
     install_nginx

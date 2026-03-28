@@ -7,6 +7,7 @@ set -euo pipefail
 APP_DIR="/opt/birdcam"
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 CHARTJS_VERSION="4.4.7"
+CHARTJS_DATE_ADAPTER_VERSION="3.0.0"
 
 info() { echo -e "\033[1;34m[INFO]\033[0m $*"; }
 ok()   { echo -e "\033[1;32m[OK]\033[0m $*"; }
@@ -40,6 +41,14 @@ if [ ! -f "${js_dir}/chart.min.js" ] || [ ! -s "${js_dir}/chart.min.js" ]; then
         -o "${js_dir}/chart.min.js"
     chown birdcam:birdcam "${js_dir}/chart.min.js"
     ok "Chart.js installed"
+fi
+
+info "Installing Chart.js date adapter if missing..."
+if [ ! -f "${js_dir}/chartjs-adapter-date-fns.bundle.min.js" ] || [ ! -s "${js_dir}/chartjs-adapter-date-fns.bundle.min.js" ]; then
+    curl -sL "https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@${CHARTJS_DATE_ADAPTER_VERSION}/dist/chartjs-adapter-date-fns.bundle.min.js" \
+        -o "${js_dir}/chartjs-adapter-date-fns.bundle.min.js"
+    chown birdcam:birdcam "${js_dir}/chartjs-adapter-date-fns.bundle.min.js"
+    ok "Chart.js date adapter installed"
 fi
 
 info "Updating systemd units..."

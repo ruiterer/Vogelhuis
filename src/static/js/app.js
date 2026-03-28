@@ -603,12 +603,13 @@ function initGraphs() {
                 options: commonOptions,
             });
 
-            // Motion chart — bar chart counting events per time bucket
-            const motionLabels = motionEvents.map(e => formatTime(e.timestamp));
+            // Motion chart — bar chart with fixed time scale matching selected period
+            const now = new Date();
+            const rangeStart = new Date(now.getTime() - currentMinutes * 60000);
             charts.motion = createChart("chart-motion", {
                 type: "bar",
                 data: {
-                    labels: motionLabels,
+                    labels: motionEvents.map(e => e.timestamp.replace(" ", "T")),
                     datasets: [{
                         label: "Motion Events",
                         data: motionEvents.map(() => 1),
@@ -620,7 +621,23 @@ function initGraphs() {
                 options: {
                     ...commonOptions,
                     scales: {
-                        ...commonOptions.scales,
+                        x: {
+                            type: "time",
+                            min: rangeStart.toISOString(),
+                            max: now.toISOString(),
+                            time: {
+                                tooltipFormat: "MMM d, HH:mm",
+                                displayFormats: {
+                                    minute: "HH:mm",
+                                    hour: "HH:mm",
+                                    day: "MMM d, HH:mm",
+                                },
+                            },
+                            ticks: {
+                                maxTicksLimit: 12,
+                                maxRotation: 0,
+                            },
+                        },
                         y: { beginAtZero: true, ticks: { stepSize: 1 } },
                     },
                 },
