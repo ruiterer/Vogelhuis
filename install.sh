@@ -34,7 +34,7 @@ check_pi() {
         err "This does not appear to be a Raspberry Pi"
         exit 1
     fi
-    info "Detected: $(cat /proc/device-tree/model)"
+    info "Detected: $(tr -d '\0' < /proc/device-tree/model)"
 }
 
 # --- Installation steps ---
