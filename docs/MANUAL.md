@@ -184,6 +184,7 @@ The **Settings** page lets you change how the system works. After changing setti
 ### Stream settings
 - **Resolution**: video quality (480p, 720p, or 1080p). Higher is sharper but uses more resources.
 - **Framerate**: how many frames per second (5, 15, 25, or 30). 25 is smooth; 15 is fine for a birdhouse.
+- **Camera Model**: select your NoIR camera model. This loads the correct tuning file to fix the pink tint under IR illumination. Leave on "Auto detect" if you don't use IR or don't have a pink tint.
 - **Rotate 180°**: flip the image if the camera is mounted upside down.
 
 After changing stream settings, click the **Restart Camera Stream** button to apply them. The video will briefly go offline while it restarts.

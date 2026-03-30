@@ -40,7 +40,9 @@ def settings():
     conf = cfg.load()
     return render_template("settings.html", config=conf,
                            resolutions=cfg.VALID_RESOLUTIONS,
-                           framerates=cfg.VALID_FRAMERATES)
+                           framerates=cfg.VALID_FRAMERATES,
+                           camera_models=cfg.VALID_CAMERA_MODELS,
+                           camera_model_labels=cfg.CAMERA_MODEL_LABELS)
 
 
 @app.route("/health")
@@ -115,6 +117,8 @@ def api_config_put():
             current["stream"]["framerate"] = int(s["framerate"])
         if "rotation" in s:
             current["stream"]["rotation"] = int(s["rotation"])
+        if "camera_model" in s:
+            current["stream"]["camera_model"] = s["camera_model"]
 
     if "ui" in new_config:
         if "title" in new_config["ui"]:
@@ -314,7 +318,7 @@ def _stream_config_changed(new_config):
     if "stream" not in new_config:
         return False
     s = new_config["stream"]
-    return "resolution" in s or "framerate" in s or "rotation" in s
+    return "resolution" in s or "framerate" in s or "rotation" in s or "camera_model" in s
 
 
 def _gpio_config_changed(new_config):

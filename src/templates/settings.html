@@ -23,6 +23,14 @@
                     {% endfor %}
                 </select>
             </label>
+            <label>
+                Camera Model
+                <select name="stream.camera_model">
+                    {% for model in camera_models %}
+                    <option value="{{ model }}" {% if config.stream.camera_model == model %}selected{% endif %}>{{ camera_model_labels[model] }}</option>
+                    {% endfor %}
+                </select>
+            </label>
             <label class="toggle-label">
                 Rotate 180°
                 <input type="checkbox" name="stream.rotation" value="180" {% if config.stream.rotation == 180 %}checked{% endif %}>

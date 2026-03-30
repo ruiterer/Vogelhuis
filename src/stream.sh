@@ -35,13 +35,38 @@ get_dimensions() {
 RESOLUTION=$(get_config "c['stream']['resolution']")
 FRAMERATE=$(get_config "c['stream']['framerate']")
 ROTATION=$(get_config "c.get('stream', {}).get('rotation', 0)")
+CAMERA_MODEL=$(get_config "c.get('stream', {}).get('camera_model', 'auto')")
 HLS_PATH=$(get_config "c['hls']['path']")
 SEGMENT_DURATION=$(get_config "c['hls']['segment_duration']")
 PLAYLIST_SIZE=$(get_config "c['hls']['playlist_size']")
 
 read -r WIDTH HEIGHT <<< "$(get_dimensions "$RESOLUTION")"
 
-log_info "Stream starting: ${WIDTH}x${HEIGHT} @ ${FRAMERATE}fps, rotation=${ROTATION}"
+# Resolve tuning file for camera model
+TUNING_ARGS=()
+if [ "$CAMERA_MODEL" != "auto" ]; then
+    # Map model name to tuning filename
+    case "$CAMERA_MODEL" in
+        ov5647_noir)       TUNING_FILE="ov5647_noir.json" ;;
+        imx219_noir)       TUNING_FILE="imx219_noir.json" ;;
+        imx477_noir)       TUNING_FILE="imx477_noir.json" ;;
+        imx708_noir)       TUNING_FILE="imx708_noir.json" ;;
+        imx708_wide_noir)  TUNING_FILE="imx708_wide_noir.json" ;;
+        *)                 TUNING_FILE="" ;;
+    esac
+    if [ -n "$TUNING_FILE" ]; then
+        # Try vc4 path first (Pi 4, Zero 2 W), then pisp (Pi 5)
+        if [ -f "/usr/share/libcamera/ipa/rpi/vc4/${TUNING_FILE}" ]; then
+            TUNING_ARGS=(--tuning-file "/usr/share/libcamera/ipa/rpi/vc4/${TUNING_FILE}")
+        elif [ -f "/usr/share/libcamera/ipa/rpi/pisp/${TUNING_FILE}" ]; then
+            TUNING_ARGS=(--tuning-file "/usr/share/libcamera/ipa/rpi/pisp/${TUNING_FILE}")
+        else
+            log_warn "Tuning file ${TUNING_FILE} not found, using auto detection"
+        fi
+    fi
+fi
+
+log_info "Stream starting: ${WIDTH}x${HEIGHT} @ ${FRAMERATE}fps, rotation=${ROTATION}, camera=${CAMERA_MODEL}"
 log_info "HLS output: ${HLS_PATH}/stream.m3u8"
 
 # Ensure HLS output directory exists (tmpfs)
@@ -71,6 +96,7 @@ rpicam-vid \
     --height "$HEIGHT" \
     --framerate "$FRAMERATE" \
     --rotation "$ROTATION" \
+    "${TUNING_ARGS[@]}" \
     --bitrate 0 \
     --profile main \
     --level 4.2 \

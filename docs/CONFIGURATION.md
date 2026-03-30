@@ -11,6 +11,7 @@ All settings are in `/etc/birdcam/birdcam.yml`. Changes can be made via the web 
 | `resolution` | `480p`, `720p`, `1080p` | `720p` | Higher = more bandwidth, more CPU on Pi Zero 2 W |
 | `framerate` | `5`, `15`, `25`, `30` | `25` | Lower = less bandwidth, better for Pi Zero 2 W |
 | `rotation` | `0`, `180` | `0` | Rotate the image if the camera is mounted upside down |
+| `camera_model` | `auto`, `ov5647_noir`, `imx219_noir`, `imx477_noir`, `imx708_noir`, `imx708_wide_noir` | `auto` | Select your NoIR camera to fix pink tint under IR |
 
 Changing stream settings requires restarting the camera service (use the button on the Settings page or `sudo systemctl restart birdcam-stream`).
 

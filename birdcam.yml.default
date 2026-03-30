@@ -8,6 +8,9 @@ stream:
   framerate: 25
   # Rotation: 0 or 180 degrees
   rotation: 0
+  # Camera model: auto, ov5647_noir, imx219_noir, imx477_noir, imx708_noir, imx708_wide_noir
+  # Select your NoIR camera model to fix pink tint under IR illumination
+  camera_model: "auto"
 
 ui:
   title: "Birdcam"

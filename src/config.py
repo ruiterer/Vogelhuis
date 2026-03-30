@@ -17,6 +17,7 @@ DEFAULTS = {
         "resolution": "720p",
         "framerate": 25,
         "rotation": 0,
+        "camera_model": "auto",
     },
     "ui": {
         "title": "Birdcam",
@@ -76,9 +77,29 @@ RESOLUTION_MAP = {
     "1080p": (1920, 1080),
 }
 
+# Camera models and their NoIR tuning files (under /usr/share/libcamera/ipa/rpi/)
+CAMERA_MODELS = {
+    "auto": None,
+    "ov5647_noir": "ov5647_noir.json",
+    "imx219_noir": "imx219_noir.json",
+    "imx477_noir": "imx477_noir.json",
+    "imx708_noir": "imx708_noir.json",
+    "imx708_wide_noir": "imx708_wide_noir.json",
+}
+
+CAMERA_MODEL_LABELS = {
+    "auto": "Auto detect",
+    "ov5647_noir": "Camera v1 NoIR (OV5647)",
+    "imx219_noir": "Camera v2 NoIR (IMX219)",
+    "imx477_noir": "HQ Camera NoIR (IMX477)",
+    "imx708_noir": "Camera v3 NoIR (IMX708)",
+    "imx708_wide_noir": "Camera v3 Wide NoIR (IMX708)",
+}
+
 VALID_FRAMERATES = [5, 15, 25, 30]
 VALID_ROTATIONS = [0, 180]
 VALID_RESOLUTIONS = list(RESOLUTION_MAP.keys())
+VALID_CAMERA_MODELS = list(CAMERA_MODELS.keys())
 
 
 def _deep_merge(base, override):
@@ -129,6 +150,10 @@ def validate(config):
     rotation = config.get("stream", {}).get("rotation", 0)
     if rotation not in VALID_ROTATIONS:
         errors.append(f"Invalid rotation: {rotation}. Must be one of {VALID_ROTATIONS}")
+
+    camera_model = config.get("stream", {}).get("camera_model", "auto")
+    if camera_model not in VALID_CAMERA_MODELS:
+        errors.append(f"Invalid camera_model: {camera_model}. Must be one of {VALID_CAMERA_MODELS}")
 
     threshold = config.get("snapshots", {}).get("min_free_disk_percent", 10)
     if not (1 <= threshold <= 50):

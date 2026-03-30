@@ -129,7 +129,7 @@ sudo bash update.sh           # deploy changes
 - Minimize SD card writes (HLS on tmpfs, SQLite with WAL mode, structured logging)
 - Support 3 concurrent browser viewers
 - All config changes must survive reboots (persisted to YAML)
-- Valid resolutions: `480p`, `720p`, `1080p`; valid framerates: `5`, `15`, `25`, `30`; valid rotations: `0`, `180`
+- Valid resolutions: `480p`, `720p`, `1080p`; valid framerates: `5`, `15`, `25`, `30`; valid rotations: `0`, `180`; valid camera_models: `auto`, `ov5647_noir`, `imx219_noir`, `imx477_noir`, `imx708_noir`, `imx708_wide_noir`
 - GPIO pins: BCM 0-27, no duplicates allowed
 - Fan thresholds: on_temp must be > off_temp (hysteresis)
 - Light schedule: HH:MM format, complementary (IR and normal light are opposites)
