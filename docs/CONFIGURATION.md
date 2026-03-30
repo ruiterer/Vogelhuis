@@ -8,16 +8,16 @@ All settings are in `/etc/birdcam/birdcam.yml`. Changes can be made via the web 
 
 | Setting | Options | Default | Notes |
 |---------|---------|---------|-------|
-| `resolution` | `480p`, `720p`, `1080p` | `720p` | Square crop from sensor center. Higher = more bandwidth |
+| `resolution` | `480p`, `720p`, `1080p` | `720p` | Higher = more bandwidth, more CPU on Pi Zero 2 W |
 | `framerate` | `5`, `15`, `25`, `30` | `25` | Lower = less bandwidth, better for Pi Zero 2 W |
 | `rotation` | `0`, `180` | `0` | Rotate the image if the camera is mounted upside down |
 
 Changing stream settings requires restarting the camera service (use the button on the Settings page or `sudo systemctl restart birdcam-stream`).
 
-**Resolution dimensions** (square, uses full sensor height via center crop):
-- 480p: 480x480
-- 720p: 720x720
-- 1080p: 1080x1080
+**Resolution dimensions:**
+- 480p: 854x480
+- 720p: 1280x720
+- 1080p: 1920x1080
 
 **Recommendations by hardware:**
 

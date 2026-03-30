@@ -21,13 +21,13 @@ print($1)
 "
 }
 
-# Resolution mapping (square crop from center of sensor)
+# Resolution mapping
 get_dimensions() {
     case "$1" in
-        480p)  echo "480 480" ;;
-        720p)  echo "720 720" ;;
-        1080p) echo "1080 1080" ;;
-        *)     echo "720 720" ;;
+        480p)  echo "854 480" ;;
+        720p)  echo "1280 720" ;;
+        1080p) echo "1920 1080" ;;
+        *)     echo "1280 720" ;;
     esac
 }
 
@@ -71,7 +71,6 @@ rpicam-vid \
     --height "$HEIGHT" \
     --framerate "$FRAMERATE" \
     --rotation "$ROTATION" \
-    --roi 0.21875,0,0.5625,1.0 \
     --bitrate 0 \
     --profile main \
     --level 4.2 \
