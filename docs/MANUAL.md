@@ -182,7 +182,7 @@ At the bottom of the Health page, a log viewer shows system messages. This is ma
 The **Settings** page lets you change how the system works. After changing settings, click **Save** at the top.
 
 ### Stream settings
-- **Resolution**: video quality (480p, 720p, or 1080p). Higher is sharper but uses more resources.
+- **Resolution**: video quality (480p, 720p, or 1080p). Square format, cropped from the center of the sensor. Higher is sharper but uses more resources.
 - **Framerate**: how many frames per second (5, 15, 25, or 30). 25 is smooth; 15 is fine for a birdhouse.
 - **Rotate 180°**: flip the image if the camera is mounted upside down.
 

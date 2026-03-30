@@ -2,7 +2,7 @@
 # Copy to /etc/birdcam/birdcam.yml and edit as needed.
 
 stream:
-  # Resolution: 480p, 720p, 1080p
+  # Resolution: 480p, 720p, 1080p (square crop from sensor center)
   resolution: "720p"
   # Framerate: 5, 15, 25, 30
   framerate: 25

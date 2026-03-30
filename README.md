@@ -5,7 +5,7 @@ A Raspberry Pi birdhouse camera system with live HLS streaming, GPIO sensor moni
 ## Features
 
 - Live H.264 video stream via HLS (Safari, Chrome, any modern browser)
-- Configurable resolution (480p / 720p / 1080p) and framerate (5-30 fps)
+- Configurable resolution (480p / 720p / 1080p, square format) and framerate (5-30 fps)
 - Manual snapshot capture with thumbnail preview and JPEG download
 - GPIO control: IR light, normal light, and fan with web UI toggles
 - Complementary light schedule (automatic IR/normal light switching)

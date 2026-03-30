@@ -109,7 +109,7 @@ h2 { font-size: 18px; margin: 24px 0 12px; color: var(--text); }
 .video-wrapper {
     position: relative;
     background: #000;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 1 / 1;
 }
 
 .video-wrapper video {
