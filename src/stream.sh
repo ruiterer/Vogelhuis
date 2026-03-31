@@ -55,13 +55,17 @@ if [ "$CAMERA_MODEL" != "auto" ]; then
         *)                 TUNING_FILE="" ;;
     esac
     if [ -n "$TUNING_FILE" ]; then
-        # Try vc4 path first (Pi 4, Zero 2 W), then pisp (Pi 5)
-        if [ -f "/usr/share/libcamera/ipa/rpi/vc4/${TUNING_FILE}" ]; then
-            TUNING_ARGS=(--tuning-file "/usr/share/libcamera/ipa/rpi/vc4/${TUNING_FILE}")
-        elif [ -f "/usr/share/libcamera/ipa/rpi/pisp/${TUNING_FILE}" ]; then
-            TUNING_ARGS=(--tuning-file "/usr/share/libcamera/ipa/rpi/pisp/${TUNING_FILE}")
+        # Detect ISP: Pi 5 uses PiSP, older Pis use vc4 (bcm2835)
+        if grep -q "Pi 5" /proc/device-tree/model 2>/dev/null; then
+            ISP_DIR="pisp"
         else
-            log_warn "Tuning file ${TUNING_FILE} not found, using auto detection"
+            ISP_DIR="vc4"
+        fi
+        TUNING_PATH="/usr/share/libcamera/ipa/rpi/${ISP_DIR}/${TUNING_FILE}"
+        if [ -f "$TUNING_PATH" ]; then
+            TUNING_ARGS=(--tuning-file "$TUNING_PATH")
+        else
+            log_warn "Tuning file ${TUNING_PATH} not found, using auto detection"
         fi
     fi
 fi
