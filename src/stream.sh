@@ -93,10 +93,11 @@ trap cleanup EXIT INT TERM
 # rpicam-vid: capture H.264 from camera using hardware encoder
 # ffmpeg: remux into HLS segments (no re-encoding, copy only)
 # stderr from both tools goes directly to the log (captured by systemd)
-# Pi 5 uses libav backend and needs explicit format for stdout
-LIBAV_FMT_ARGS=()
+# Pi 5 uses libav backend internally for --codec h264, which cannot pipe
+# raw h264 to stdout. Use mpegts container format for piping on Pi 5.
+PI5_ARGS=()
 if grep -q "Pi 5" /proc/device-tree/model 2>/dev/null; then
-    LIBAV_FMT_ARGS=(--libav-format h264)
+    PI5_ARGS=(--libav-format mpegts)
 fi
 
 rpicam-vid \
@@ -107,12 +108,13 @@ rpicam-vid \
     --framerate "$FRAMERATE" \
     --rotation "$ROTATION" \
     "${TUNING_ARGS[@]}" \
-    "${LIBAV_FMT_ARGS[@]}" \
+    "${PI5_ARGS[@]}" \
     --bitrate 0 \
     --profile main \
     --level 4.2 \
     --inline \
     --nopreview \
+    --flush \
     --timeout 0 \
     --output - \
   | ffmpeg \
