@@ -13,6 +13,8 @@ All settings are in `/etc/birdcam/birdcam.yml`. Changes can be made via the web 
 | `rotation` | `0`, `180` | `0` | Rotate the image if the camera is mounted upside down |
 | `camera_model` | `auto`, `ov5647_noir`, `imx219_noir`, `imx477_noir`, `imx708_noir`, `imx708_wide_noir` | `auto` | Select your NoIR camera to fix pink tint under IR |
 
+When a camera model is selected, the system automatically loads the correct tuning file for the Pi's ISP: from `/usr/share/libcamera/ipa/rpi/pisp/` on Pi 5 or `/usr/share/libcamera/ipa/rpi/vc4/` on Pi 4 and Zero 2 W.
+
 Changing stream settings requires restarting the camera service (use the button on the Settings page or `sudo systemctl restart birdcam-stream`).
 
 **Resolution dimensions:**

@@ -60,13 +60,14 @@
 ## Component Details
 
 ### Streaming Pipeline (`birdcam-stream.service`)
-- `rpicam-vid` captures H.264 using the Pi's hardware encoder (near-zero CPU)
+- `rpicam-vid` captures H.264 using the Pi's hardware encoder (near-zero CPU on Pi 4; software x264 on Pi 5)
 - Output is piped to `ffmpeg` which remuxes into HLS segments (`-c:v copy`, no re-encoding)
 - Segments are 2 seconds each, playlist holds 5 segments (10-second window)
 - Written to tmpfs (`/dev/shm/birdcam/`) to avoid SD card wear
 - Old segments are automatically deleted by ffmpeg
 - Service uses `KillMode=control-group` and kills zombie rpicam-vid processes on restart
 - Supports 0° and 180° rotation (configured in YAML)
+- **Pi 5 compatibility**: The Pi 5 uses the PiSP image signal processor (not vc4/bcm2835). The stream script auto-detects the Pi model and selects the correct tuning file directory (`pisp/` vs `vc4/`). Pi 5 also requires `--libav-format mpegts` for piping rpicam-vid output to ffmpeg, since its libav backend cannot pipe raw H.264 to stdout.
 
 ### Web Application (`birdcam-web.service`)
 - Flask app served by gunicorn (2 workers, 30-second timeout)
@@ -165,7 +166,7 @@
 
 **Why rpicam-vid + ffmpeg instead of alternatives:**
 - rpicam-vid is the official Raspberry Pi camera tool, guaranteed compatibility with Camera 3
-- Hardware H.264 encoding means near-zero CPU
+- Hardware H.264 encoding means near-zero CPU on Pi 4 (Pi 5 currently uses software x264 via the libav backend, which is still lightweight on its quad-core CPU)
 - ffmpeg's HLS muxer is battle-tested and standards-compliant
 - Simpler than GStreamer, fewer moving parts than MediaMTX
 

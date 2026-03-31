@@ -152,6 +152,7 @@ Snapshot cleanup runs hourly via systemd timer. Sensor data cleanup runs hourly 
 
 - **SD card life**: While minimized, long-term snapshot storage and logging do write to SD card
 - **Pi Zero 2 W**: Limited to 480p @ 15fps for reliable operation
+- **Pi 5 encoding**: Uses software x264 encoding (via rpicam-vid's libav backend) instead of hardware H.264. This uses more CPU than Pi 4 but is manageable on the Pi 5's quad-core processor
 - **HLS latency**: 4-6 seconds is inherent to the protocol; not reducible without changing to a different streaming method
 - **Single camera**: The system supports one camera; multiple cameras would need separate instances
 - **No recording**: The system streams live only; continuous recording would require additional storage and pipeline changes

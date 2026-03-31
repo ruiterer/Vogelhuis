@@ -84,6 +84,37 @@ sudo reboot
 
 **Check ribbon cable:** The cable should be inserted with the blue side facing the Ethernet port on Pi 4B.
 
+## Pi 5: "Tuning data file target returned bcm2835, expected pisp"
+
+The Pi 5 uses a different image signal processor (PiSP) than older Pis (vc4/bcm2835). If you see this error, the stream script is loading a tuning file from the wrong directory.
+
+**Cause:** The `camera_model` setting is pointing to a vc4 tuning file instead of the pisp one.
+
+**Fix:** Update to the latest version which auto-detects the ISP:
+```bash
+cd ~/Vogelhuis
+git pull
+sudo bash update.sh
+```
+
+Verify the correct tuning file is loaded by checking the stream log:
+```bash
+grep "Using tuning file" /var/log/birdcam/stream.log
+# Pi 5 should show: /usr/share/libcamera/ipa/rpi/pisp/...
+# Pi 4 should show: /usr/share/libcamera/ipa/rpi/vc4/...
+```
+
+## Pi 5: "libav: cannot allocate output context"
+
+On Pi 5, `rpicam-vid` uses the libav backend internally and cannot pipe raw H.264 to stdout. The stream script handles this automatically by using `--libav-format mpegts` on Pi 5.
+
+**Fix:** Update to the latest version:
+```bash
+cd ~/Vogelhuis
+git pull
+sudo bash update.sh
+```
+
 ## Temperature/humidity showing "--"
 
 The DHT22 sensor is either not connected or not responding.
@@ -209,8 +240,9 @@ sudo systemctl start birdcam-stream birdcam-web birdcam-gpio
 
 - Check health page for CPU percentage
 - If above 50%, reduce resolution or framerate
-- The streaming pipeline with `-c:v copy` should use ~5% CPU
-- High CPU usually means ffmpeg is re-encoding (should not happen with this config)
+- On Pi 4, the streaming pipeline uses hardware H.264 encoding (~5% CPU)
+- On Pi 5, the pipeline currently uses software x264 encoding via the libav backend, which uses more CPU but is manageable on the Pi 5's quad-core processor
+- Unexpectedly high CPU usually means ffmpeg is re-encoding (should not happen with `-c:v copy`)
 
 ## Disk space running out
 

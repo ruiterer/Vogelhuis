@@ -11,7 +11,7 @@ Raspberry Pi birdhouse camera system — LAN-only, browser-based live HLS stream
 
 ## Stack
 
-- **Streaming**: rpicam-vid (hardware H.264) → ffmpeg (HLS segmenter, `-c:v copy`) → tmpfs
+- **Streaming**: rpicam-vid (hardware H.264 on Pi 4, software x264 via libav on Pi 5) → ffmpeg (HLS segmenter, `-c:v copy`) → tmpfs
 - **Web**: Flask + gunicorn (2 workers) on localhost:8080, behind nginx on port 80
 - **Frontend**: Vanilla HTML/CSS/JS + hls.js (vendored, v1.5.13) + Chart.js (vendored, v4.4.7)
 - **Config**: Single YAML file at `/etc/birdcam/birdcam.yml`
@@ -103,6 +103,8 @@ mqtt:      # enabled, broker, port, topic, location, object_name, publish_interv
 - Log sources: `stream`, `web`, `cleanup`, `gpio` (own log files), `snapshot`, `health`, `config` (share `web.log`)
 - Stream service uses `KillMode=control-group` + `ExecStartPre` pkill to ensure clean camera release on restart
 - rpicam-vid creates kernel threads that can zombie — always kill before restarting, never run rpicam-hello while stream is active
+- Pi 5 uses PiSP ISP (tuning files in `/usr/share/libcamera/ipa/rpi/pisp/`), Pi 4 uses vc4 (tuning files in `vc4/`). `stream.sh` auto-detects via `/proc/device-tree/model`
+- Pi 5 rpicam-vid uses libav backend — requires `--libav-format mpegts` for stdout piping (raw h264 format doesn't work)
 - GPIO service uses `gpiod` (works on Pi 4 and Pi 5, modern libgpiod API)
 - SQLite uses WAL mode for concurrent read (web) / write (gpio service)
 
