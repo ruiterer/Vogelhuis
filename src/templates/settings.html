@@ -147,6 +147,15 @@
                 <input type="number" name="mqtt.port" value="{{ config.mqtt.port }}" min="1" max="65535">
             </label>
             <label>
+                Username
+                <input type="text" name="mqtt.username" value="{{ config.mqtt.username }}" maxlength="100" placeholder="optional">
+            </label>
+            <label>
+                Password
+                <input type="password" name="mqtt.password" value="" maxlength="200"
+                       placeholder="{% if config.mqtt.password_set %}••••••••{% else %}optional{% endif %}">
+            </label>
+            <label>
                 Topic
                 <input type="text" name="mqtt.topic" value="{{ config.mqtt.topic }}" maxlength="200">
             </label>

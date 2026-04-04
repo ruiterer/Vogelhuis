@@ -206,7 +206,7 @@ After changing stream settings, click the **Restart Camera Stream** button to ap
 After changing GPIO settings, click the **Restart GPIO Service** button.
 
 ### MQTT settings
-For advanced users who want to send sensor data to external systems like Home Assistant or Node-RED. Leave disabled if you don't use these tools.
+For advanced users who want to send sensor data to external systems like Home Assistant or Node-RED. Leave disabled if you don't use these tools. If your MQTT broker requires authentication, enter the username and password. The password is stored in the config file on the Pi but is never exposed in the web UI or API responses.
 
 ---
 

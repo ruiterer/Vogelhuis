@@ -38,6 +38,9 @@ def index():
 @app.route("/settings")
 def settings():
     conf = cfg.load()
+    # Mask password but indicate if one is set
+    conf["mqtt"]["password_set"] = bool(conf.get("mqtt", {}).get("password"))
+    conf["mqtt"]["password"] = ""
     return render_template("settings.html", config=conf,
                            resolutions=cfg.VALID_RESOLUTIONS,
                            framerates=cfg.VALID_FRAMERATES,
@@ -97,7 +100,14 @@ def download_snapshot(filename):
 
 @app.route("/api/config", methods=["GET"])
 def api_config_get():
-    return jsonify(cfg.load())
+    config = cfg.load()
+    # Mask MQTT password — never expose in API responses
+    if config.get("mqtt", {}).get("password"):
+        config["mqtt"]["password_set"] = True
+        config["mqtt"]["password"] = ""
+    else:
+        config["mqtt"]["password_set"] = False
+    return jsonify(config)
 
 
 @app.route("/api/config", methods=["PUT"])
@@ -182,6 +192,10 @@ def api_config_put():
             mqtt["object_name"] = str(m["object_name"])[:100]
         if "publish_interval" in m:
             mqtt["publish_interval"] = int(m["publish_interval"])
+        if "username" in m:
+            mqtt["username"] = str(m["username"])[:100]
+        if "password" in m and m["password"]:
+            mqtt["password"] = str(m["password"])[:200]
 
     errors = cfg.validate(current)
     if errors:

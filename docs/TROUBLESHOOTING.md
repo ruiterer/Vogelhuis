@@ -206,6 +206,8 @@ The GPIO service must be running and the DHT22 sensor connected for temperature/
 
 **Check that MQTT is enabled** in the config with a valid broker address.
 
+**If your broker requires authentication**, verify that username and password are set in the MQTT settings.
+
 **Check GPIO service logs for MQTT errors:**
 ```bash
 grep -i mqtt /var/log/birdcam/gpio.log
@@ -216,6 +218,7 @@ grep -i mqtt /var/log/birdcam/gpio.log
 /opt/birdcam/venv/bin/python -c "
 import paho.mqtt.client as mqtt
 c = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+c.username_pw_set('YOUR_USERNAME', 'YOUR_PASSWORD')  # omit if no auth
 c.connect('YOUR_BROKER_IP', 1883, 60)
 print('Connected')
 c.disconnect()

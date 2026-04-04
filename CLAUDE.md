@@ -18,7 +18,7 @@ Raspberry Pi birdhouse camera system — LAN-only, browser-based live HLS stream
 - **Logging**: Centralized via `logging_setup.py` — structured format (`YYYY-MM-DD HH:MM:SS [LEVEL] [source]`), stderr → systemd → log files, mtime-cached reader
 - **GPIO**: `gpiod` (libgpiod) for pin control, `adafruit-circuitpython-dht` for DHT22 sensor
 - **Database**: SQLite with WAL mode at `/var/lib/birdcam/sensor_data.db`
-- **MQTT**: Optional `paho-mqtt` publishing for external dashboards
+- **MQTT**: Optional `paho-mqtt` publishing for external dashboards (supports username/password authentication)
 - **Services**: systemd units for stream, web, gpio, cleanup timer
 - **Target hardware**: Pi 4B primary, Pi Zero 2 W and Pi 5 compatible
 
@@ -87,7 +87,7 @@ snapshots: # path, retention_days, min_free_disk_percent
 system:    # timezone, log_retention_days, log_path
 hls:       # segment_duration, playlist_size, path
 gpio:      # enabled, sensor_poll_interval, pins, fan thresholds, light_schedule, motion cooldown, data_retention_days
-mqtt:      # enabled, broker, port, topic, location, object_name, publish_interval
+mqtt:      # enabled, broker, port, username, password, topic, location, object_name, publish_interval
 ```
 
 ## Development Notes

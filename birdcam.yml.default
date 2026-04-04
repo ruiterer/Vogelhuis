@@ -64,6 +64,9 @@ mqtt:
   # MQTT broker hostname or IP address
   broker: ""
   port: 1883
+  # Optional MQTT authentication
+  username: ""
+  password: ""
   topic: "birdcam/status"
   # Values included in the MQTT payload
   location: "Tuin"

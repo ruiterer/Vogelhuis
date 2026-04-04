@@ -258,7 +258,8 @@ function initSettings() {
             const lastKey = parts[parts.length - 1];
             // Fields that should remain as strings
             const stringFields = ["title", "timezone", "path", "night_start", "day_start",
-                                  "broker", "topic", "location", "object_name"];
+                                  "broker", "topic", "location", "object_name",
+                                  "username", "password"];
             const num = Number(value);
             obj[lastKey] = (value !== "" && !isNaN(num) && !stringFields.includes(lastKey)) ? num : value;
         }
@@ -278,6 +279,11 @@ function initSettings() {
         } else if (gpioCheckbox && gpioCheckbox.checked) {
             config.gpio = config.gpio || {};
             config.gpio.enabled = true;
+        }
+
+        // Don't send empty password (preserves existing password on server)
+        if (config.mqtt && config.mqtt.password === "") {
+            delete config.mqtt.password;
         }
 
         // Handle MQTT enabled checkbox

@@ -430,6 +430,9 @@ def _init_mqtt(config):
     try:
         import paho.mqtt.client as mqtt
         _mqtt_client = mqtt.Client(client_id="birdcam-gpio")
+        username = mqtt_config.get("username", "").strip()
+        if username:
+            _mqtt_client.username_pw_set(username, mqtt_config.get("password", ""))
         _mqtt_client.on_connect = lambda c, u, f, rc: logger.info("MQTT connected to %s", broker)
         _mqtt_client.on_disconnect = lambda c, u, rc: logger.warning("MQTT disconnected (rc=%d)", rc)
         _mqtt_client.connect_async(broker, int(mqtt_config.get("port", 1883)))

@@ -64,6 +64,8 @@ DEFAULTS = {
         "enabled": False,
         "broker": "",
         "port": 1883,
+        "username": "",
+        "password": "",
         "topic": "birdcam/status",
         "location": "Tuin",
         "object_name": "Vogelhuis_Boom",

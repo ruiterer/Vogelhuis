@@ -4,3 +4,4 @@ venv/
 .env
 *.log
 src/static/js/hls.min.js
+birdcam.yml
