@@ -177,6 +177,32 @@
     p, li { font-size: 19px; }
     li { padding: 6px 0; }
   }
+
+  @media print {
+    @page { size: A4 landscape; margin: 14mm; }
+    html, body { height: auto; overflow: visible; background: #fff; }
+    .deck { position: static; }
+    .counter, .hint, .progress { display: none !important; }
+    .slide {
+      position: relative;
+      inset: auto;
+      opacity: 1 !important;
+      transform: none !important;
+      pointer-events: auto;
+      page-break-after: always;
+      break-after: page;
+      min-height: 95vh;
+      padding: 24mm 22mm;
+      background: #fff !important;
+    }
+    .slide:last-child { page-break-after: auto; break-after: auto; }
+    h1, h2 { color: #1f4d27 !important; }
+    h1 { font-size: 44pt; }
+    h2 { font-size: 30pt; }
+    p, li { font-size: 16pt; color: #1f2a23 !important; }
+    .pill { background: #e8d9b8 !important; color: #1f4d27 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .emoji { font-size: 64pt; }
+  }
 </style>
 </head>
 <body>
