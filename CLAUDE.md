@@ -1,6 +1,30 @@
-# CLAUDE.md
+<!-- portfolio-template: v1 -->
+<!-- base-start -->
+## Portfolio-basisregels (golden template v1)
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+- Communiceer met Erik in het Nederlands; code, identifiers en commits in het
+  Engels. (Wijkt dit project bewust af? Zet de afwijking onder
+  "Projectafspraken" hieronder — de afwijking wint.)
+- Secrets staan nooit in de repo of in context: gebruik `~/.config/…`, de
+  macOS Keychain of een gitignored `.env`. De portfolio-scan bewaakt dit.
+- Gebruik altijd de interpreter/venv van het project zelf, nooit
+  systeem-Python.
+- Draai de projecttests vóór elke commit; wat afdwingbaar is zit in hooks/CI,
+  niet in dit bestand.
+- Engineeringprincipes (verkort; reden: gedrags-guardrail voor modelgeneraties
+  t/m Claude 4.x, herbeoordelen bij elke grote modelrelease — D-002 in
+  Portfolio_Manager): denk eerst na en benoem aannames; minimale oplossing,
+  niets speculatiefs; raak alleen wat de taak vereist; formuleer een toetsbaar
+  succescriterium en verifieer het resultaat.
+- Verouderende feiten (modelnamen, API-gedrag, statusdatums) horen in
+  config/README, niet in dit bestand.
+<!-- base-end -->
+
+# Vogelhuis
+
+## Projectafspraken
+
+Geen afwijkingen van de basisregels.
 
 ## Project
 
