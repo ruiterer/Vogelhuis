@@ -1,0 +1,36 @@
+#!/bin/sh
+# Golden-template pre-commit hook: draait het testcommando van dit project en
+# blokkeert de commit bij falen (CI-vervanger of aanvulling; zie D-012 in
+# Portfolio_Manager).
+#
+# Adoptie:
+# 1. Kopieer dit bestand naar <project>/scripts/hooks/pre-commit (executable).
+# 2. Vul TEST_CMD hieronder in. Voorbeelden:
+#      .venv/bin/python3 -m pytest -q
+#      .venv/bin/python3 -m unittest discover tests
+#      npm test
+#      /opt/homebrew/bin/python3 -m eriksbrain._smoke_test
+# 3. Activeer: git config core.hooksPath scripts/hooks
+
+TEST_CMD=".venv/bin/python3 -m pytest tests/ -q"
+# Optioneel: lint/format/typecheck vóór de tests (D-027). Leeg = overslaan,
+# falen = commit geblokkeerd. Voorbeelden:
+#   .venv/bin/ruff check . && .venv/bin/ruff format --check .
+#   npx eslint . && npx prettier --check .
+LINT_CMD=".venv/bin/ruff check . && .venv/bin/ruff format --check ."
+
+if [ -z "$TEST_CMD" ]; then
+    echo "pre-commit: TEST_CMD is nog niet ingevuld in scripts/hooks/pre-commit"
+    exit 1
+fi
+cd "$(git rev-parse --show-toplevel)" || exit 1
+if [ -n "$LINT_CMD" ] && ! sh -c "$LINT_CMD"; then
+    echo ""
+    echo "pre-commit: lint faalt — commit geblokkeerd."
+    exit 1
+fi
+if ! sh -c "$TEST_CMD"; then
+    echo ""
+    echo "pre-commit: tests falen — commit geblokkeerd."
+    exit 1
+fi
