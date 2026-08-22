@@ -21,7 +21,8 @@ from datetime import datetime, timedelta
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import load as load_config
-from database import init_db, record_sensor_data, record_motion_event, cleanup_old_data, close as close_db
+from database import cleanup_old_data, init_db, record_motion_event, record_sensor_data
+from database import close as close_db
 from logging_setup import get_logger
 
 logger = get_logger("gpio")
@@ -38,9 +39,9 @@ _state = {
     "humidity": None,
     "cpu_temp": None,
     "cpu_load": None,
-    "light_override": None,     # None = schedule, True/False = manual
+    "light_override": None,  # None = schedule, True/False = manual
     "ir_light_override": None,
-    "fan_override": None,       # None = auto, True/False = manual
+    "fan_override": None,  # None = auto, True/False = manual
 }
 
 # Track motion timing
@@ -71,6 +72,7 @@ def get_state():
 
 # --- Signal handling ---
 
+
 def _signal_handler(signum, frame):
     global _running
     logger.info("Received signal %d, shutting down", signum)
@@ -78,6 +80,7 @@ def _signal_handler(signum, frame):
 
 
 # --- GPIO (gpiod) ---
+
 
 def _init_gpio(config):
     """Initialize GPIO pins using gpiod."""
@@ -121,7 +124,7 @@ def _init_gpio(config):
         )
 
         req_lines = {}
-        for name, pin in output_pins.items():
+        for _name, pin in output_pins.items():
             req_lines[int(pin)] = config_output
 
         # Request output lines
@@ -136,8 +139,11 @@ def _init_gpio(config):
             config={int(pins["motion"]): config_input},
         )
 
-        logger.info("GPIO initialized: outputs=%s, motion=GPIO%d",
-                     {k: v for k, v in output_pins.items()}, pins["motion"])
+        logger.info(
+            "GPIO initialized: outputs=%s, motion=GPIO%d",
+            {k: v for k, v in output_pins.items()},
+            pins["motion"],
+        )
         return True
 
     except Exception as e:
@@ -151,6 +157,7 @@ def _set_output(pin, state):
         return
     try:
         import gpiod
+
         value = gpiod.line.Value.ACTIVE if state else gpiod.line.Value.INACTIVE
         _output_lines.set_value(int(pin), value)
     except Exception as e:
@@ -176,6 +183,7 @@ def _cleanup_gpio():
 
 # --- DHT22 sensor ---
 
+
 def _init_dht(config):
     """Initialize DHT22 sensor."""
     global _dht_device
@@ -183,14 +191,33 @@ def _init_dht(config):
     try:
         import adafruit_dht
         import board
+
         # Map BCM pin number to board pin
         pin_map = {
-            4: board.D4, 5: board.D5, 6: board.D6, 7: board.D7,
-            8: board.D8, 9: board.D9, 10: board.D10, 11: board.D11,
-            12: board.D12, 13: board.D13, 14: board.D14, 15: board.D15,
-            16: board.D16, 17: board.D17, 18: board.D18, 19: board.D19,
-            20: board.D20, 21: board.D21, 22: board.D22, 23: board.D23,
-            24: board.D24, 25: board.D25, 26: board.D26, 27: board.D27,
+            4: board.D4,
+            5: board.D5,
+            6: board.D6,
+            7: board.D7,
+            8: board.D8,
+            9: board.D9,
+            10: board.D10,
+            11: board.D11,
+            12: board.D12,
+            13: board.D13,
+            14: board.D14,
+            15: board.D15,
+            16: board.D16,
+            17: board.D17,
+            18: board.D18,
+            19: board.D19,
+            20: board.D20,
+            21: board.D21,
+            22: board.D22,
+            23: board.D23,
+            24: board.D24,
+            25: board.D25,
+            26: board.D26,
+            27: board.D27,
         }
         board_pin = pin_map.get(int(pin))
         if board_pin is None:
@@ -224,7 +251,7 @@ def _read_dht():
             hum = _dht_device.humidity
             if temp is not None and hum is not None:
                 return round(temp, 1), round(hum, 1)
-        except Exception:
+        except Exception:  # noqa: S110  # bewust best-effort; falen is hier onschadelijk
             pass
         logger.debug("DHT22 read failed: %s", e)
     except Exception as e:
@@ -238,12 +265,13 @@ def _cleanup_dht():
     if _dht_device:
         try:
             _dht_device.exit()
-        except Exception:
+        except Exception:  # noqa: S110  # bewust best-effort; falen is hier onschadelijk
             pass
         _dht_device = None
 
 
 # --- CPU metrics ---
+
 
 def _read_cpu_temp():
     """Read CPU temperature in Celsius."""
@@ -258,6 +286,7 @@ def _read_cpu_load():
     """Read CPU load percentage."""
     try:
         import psutil
+
         return psutil.cpu_percent(interval=0)
     except ImportError:
         # Fallback: read /proc/stat
@@ -269,6 +298,7 @@ def _read_cpu_load():
 
 
 # --- Fan control ---
+
 
 def _update_fan(config):
     """Auto-control fan based on CPU temperature with hysteresis."""
@@ -298,6 +328,7 @@ def _update_fan(config):
 
 # --- Light schedule ---
 
+
 def _parse_time(time_str):
     """Parse HH:MM string to (hour, minute) tuple."""
     parts = time_str.split(":")
@@ -311,8 +342,6 @@ def _is_night_time(config):
     day_h, day_m = _parse_time(schedule["day_start"])
 
     now = datetime.now()
-    night_time = now.replace(hour=night_h, minute=night_m, second=0, microsecond=0)
-    day_time = now.replace(hour=day_h, minute=day_m, second=0, microsecond=0)
 
     current_minutes = now.hour * 60 + now.minute
     night_minutes = night_h * 60 + night_m
@@ -357,8 +386,11 @@ def _update_lights(config):
     if desired_ir != _state["ir_light"]:
         _state["ir_light"] = desired_ir
         _set_output(pins["ir_light"], desired_ir)
-        logger.info("IR light %s (%s)", "ON" if desired_ir else "OFF",
-                     "override" if _state["ir_light_override"] is not None else "schedule")
+        logger.info(
+            "IR light %s (%s)",
+            "ON" if desired_ir else "OFF",
+            "override" if _state["ir_light_override"] is not None else "schedule",
+        )
 
     # Normal light: on during day, off at night (unless overridden)
     if _state["light_override"] is not None:
@@ -369,11 +401,15 @@ def _update_lights(config):
     if desired_light != _state["light"]:
         _state["light"] = desired_light
         _set_output(pins["light"], desired_light)
-        logger.info("Light %s (%s)", "ON" if desired_light else "OFF",
-                     "override" if _state["light_override"] is not None else "schedule")
+        logger.info(
+            "Light %s (%s)",
+            "ON" if desired_light else "OFF",
+            "override" if _state["light_override"] is not None else "schedule",
+        )
 
 
 # --- Motion detection ---
+
 
 def _check_motion(config):
     """Check PIR sensor for motion events."""
@@ -387,9 +423,10 @@ def _check_motion(config):
 
     try:
         import gpiod
+
         # Read current value
         value = _motion_line.get_value(int(motion_pin))
-        motion_detected = (value == gpiod.line.Value.ACTIVE)
+        motion_detected = value == gpiod.line.Value.ACTIVE
 
         if motion_detected and not _state["motion"]:
             # Rising edge — motion started
@@ -415,6 +452,7 @@ def _check_motion(config):
 
 # --- MQTT ---
 
+
 def _init_mqtt(config):
     """Initialize MQTT client if enabled."""
     global _mqtt_client
@@ -429,12 +467,15 @@ def _init_mqtt(config):
 
     try:
         import paho.mqtt.client as mqtt
+
         _mqtt_client = mqtt.Client(client_id="birdcam-gpio")
         username = mqtt_config.get("username", "").strip()
         if username:
             _mqtt_client.username_pw_set(username, mqtt_config.get("password", ""))
         _mqtt_client.on_connect = lambda c, u, f, rc: logger.info("MQTT connected to %s", broker)
-        _mqtt_client.on_disconnect = lambda c, u, rc: logger.warning("MQTT disconnected (rc=%d)", rc)
+        _mqtt_client.on_disconnect = lambda c, u, rc: logger.warning(
+            "MQTT disconnected (rc=%d)", rc
+        )
         _mqtt_client.connect_async(broker, int(mqtt_config.get("port", 1883)))
         _mqtt_client.loop_start()
         logger.info("MQTT client initialized (broker=%s:%d)", broker, mqtt_config.get("port", 1883))
@@ -488,14 +529,14 @@ def _cleanup_mqtt():
         try:
             _mqtt_client.loop_stop()
             _mqtt_client.disconnect()
-        except Exception:
+        except Exception:  # noqa: S110  # bewust best-effort; falen is hier onschadelijk
             pass
         _mqtt_client = None
 
 
 # --- Command processing (IPC via file) ---
 
-COMMAND_FILE = "/dev/shm/birdcam/gpio_commands"
+COMMAND_FILE = "/dev/shm/birdcam/gpio_commands"  # noqa: S108  # vast tmpfs-IPC-pad op de Pi, geen gedeelde temp-dir
 
 
 def _process_commands(config):
@@ -566,7 +607,7 @@ def _process_commands(config):
 
 # --- Status file (for web service to read) ---
 
-STATUS_FILE = "/dev/shm/birdcam/gpio_status.json"
+STATUS_FILE = "/dev/shm/birdcam/gpio_status.json"  # noqa: S108  # vast tmpfs-IPC-pad op de Pi, geen gedeelde temp-dir
 
 
 def _write_status():
@@ -594,6 +635,7 @@ def _write_status():
 
 # --- Main loop ---
 
+
 def main():
     global _running, _last_cleanup
 
@@ -613,7 +655,7 @@ def main():
 
     # Initialize hardware
     gpio_ok = _init_gpio(config)
-    dht_ok = _init_dht(config)
+    _init_dht(config)
     _init_mqtt(config)
 
     if not gpio_ok:

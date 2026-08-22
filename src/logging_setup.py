@@ -45,10 +45,12 @@ def get_logger(source):
     if name not in _configured:
         logger.setLevel(logging.INFO)
         handler = logging.StreamHandler()  # stderr
-        handler.setFormatter(logging.Formatter(
-            f"%(asctime)s [%(levelname)s] [{source}] %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        ))
+        handler.setFormatter(
+            logging.Formatter(
+                f"%(asctime)s [%(levelname)s] [{source}] %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+            )
+        )
         handler.addFilter(_LevelRenamer())
         logger.addHandler(handler)
         logger.propagate = False

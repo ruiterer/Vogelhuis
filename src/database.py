@@ -67,9 +67,16 @@ def init_db():
     logger.info("Database initialized")
 
 
-def record_sensor_data(temperature=None, humidity=None, cpu_temp=None,
-                       cpu_load=None, light_status=0, ir_light_status=0,
-                       fan_status=0, motion_status=0):
+def record_sensor_data(
+    temperature=None,
+    humidity=None,
+    cpu_temp=None,
+    cpu_load=None,
+    light_status=0,
+    ir_light_status=0,
+    fan_status=0,
+    motion_status=0,
+):
     """Insert a sensor reading."""
     conn = _get_connection()
     conn.execute(
@@ -78,8 +85,16 @@ def record_sensor_data(temperature=None, humidity=None, cpu_temp=None,
             light_status, ir_light_status, fan_status, motion_status)
            VALUES (strftime('%Y-%m-%dT%H:%M:%S', 'now', 'localtime'),
                    ?, ?, ?, ?, ?, ?, ?, ?)""",
-        (temperature, humidity, cpu_temp, cpu_load,
-         light_status, ir_light_status, fan_status, motion_status),
+        (
+            temperature,
+            humidity,
+            cpu_temp,
+            cpu_load,
+            light_status,
+            ir_light_status,
+            fan_status,
+            motion_status,
+        ),
     )
     conn.commit()
 

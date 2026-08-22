@@ -1,6 +1,5 @@
 """Tests for the Birdcam logging system."""
 
-import json
 import os
 import sys
 import tempfile
@@ -17,20 +16,23 @@ _tmp_config.write("{}\n")
 _tmp_config.close()
 os.environ["BIRDCAM_CONFIG"] = _tmp_config.name
 
-from logging_setup import SOURCE_FILE_MAP, get_logger
-from logs import (
+from logging_setup import (  # noqa: E402  # import na sys.path-aanpassing voor src/
+    SOURCE_FILE_MAP,
+    get_logger,
+)
+from logs import (  # noqa: E402  # import na sys.path-aanpassing voor src/
     STRUCTURED_RE,
+    _cache,
     _parse_line,
     _read_log_file,
-    _cache,
     get_logs,
     get_sources,
 )
 
-
 # ---------------------------------------------------------------------------
 # logging_setup
 # ---------------------------------------------------------------------------
+
 
 class TestSourceRegistry:
     """SOURCE_FILE_MAP is the single source of truth for log sources."""
@@ -89,6 +91,7 @@ class TestGetLogger:
 # logs._parse_line
 # ---------------------------------------------------------------------------
 
+
 class TestParseLine:
     def test_structured_line(self):
         line = "2026-03-20 14:30:00 [INFO] [web] Server started"
@@ -111,9 +114,7 @@ class TestParseLine:
         assert result["unstructured"] is True
         assert result["timestamp"] != ""
         # Should be a valid timestamp
-        assert STRUCTURED_RE.match(
-            f'{result["timestamp"]} [INFO] [x] test'
-        )
+        assert STRUCTURED_RE.match(f"{result['timestamp']} [INFO] [x] test")
 
     def test_unstructured_error_detection(self):
         line = "ffmpeg: error while loading shared libraries"
@@ -135,6 +136,7 @@ class TestParseLine:
 # logs._read_log_file  (with caching)
 # ---------------------------------------------------------------------------
 
+
 class TestReadLogFile:
     def test_nonexistent_file_returns_empty(self, tmp_path):
         result = _read_log_file(str(tmp_path / "nope.log"), "test")
@@ -143,8 +145,7 @@ class TestReadLogFile:
     def test_reads_structured_lines(self, tmp_path):
         log = tmp_path / "test.log"
         log.write_text(
-            "2026-03-20 14:00:00 [INFO] [web] line one\n"
-            "2026-03-20 14:00:01 [WARN] [web] line two\n"
+            "2026-03-20 14:00:00 [INFO] [web] line one\n2026-03-20 14:00:01 [WARN] [web] line two\n"
         )
         entries = _read_log_file(str(log), "web")
         assert len(entries) == 2
@@ -170,10 +171,7 @@ class TestReadLogFile:
 
         # Ensure mtime changes (filesystem granularity)
         time.sleep(0.05)
-        log.write_text(
-            "2026-03-20 14:00:00 [INFO] [web] v1\n"
-            "2026-03-20 14:00:01 [INFO] [web] v2\n"
-        )
+        log.write_text("2026-03-20 14:00:00 [INFO] [web] v1\n2026-03-20 14:00:01 [INFO] [web] v2\n")
         # Force different mtime
         os.utime(path, (time.time() + 1, time.time() + 1))
 
@@ -194,6 +192,7 @@ class TestReadLogFile:
 # logs.get_sources
 # ---------------------------------------------------------------------------
 
+
 class TestGetSources:
     def test_returns_sorted_list(self):
         sources = get_sources()
@@ -209,6 +208,7 @@ class TestGetSources:
 # ---------------------------------------------------------------------------
 # logs.get_logs  (integration-level)
 # ---------------------------------------------------------------------------
+
 
 class TestGetLogs:
     @pytest.fixture(autouse=True)
@@ -238,11 +238,14 @@ class TestGetLogs:
         # Patch the bound reference in logs module (not config module)
         import config
         import logs
+
         _orig_load = config.load
+
         def _patched_load():
             c = _orig_load()
             c["system"]["log_path"] = str(tmp_path)
             return c
+
         monkeypatch.setattr(logs, "load_config", _patched_load)
 
         # Clear cache between tests
@@ -321,9 +324,11 @@ class TestGetLogs:
 # Integration: modules get distinct loggers
 # ---------------------------------------------------------------------------
 
+
 class TestModuleLoggers:
     def test_each_module_has_own_logger(self):
         from logging_setup import get_logger
+
         web = get_logger("web")
         snap = get_logger("snapshot")
         health = get_logger("health")
@@ -331,16 +336,19 @@ class TestModuleLoggers:
 
     def test_config_module_has_logger(self):
         import config
+
         assert hasattr(config, "logger")
         assert config.logger.name == "birdcam.config"
 
     def test_snapshot_module_has_logger(self):
         import snapshot
+
         assert hasattr(snapshot, "logger")
         assert snapshot.logger.name == "birdcam.snapshot"
 
     def test_health_module_has_logger(self):
         import health
+
         assert hasattr(health, "logger")
         assert health.logger.name == "birdcam.health"
 
@@ -349,14 +357,13 @@ class TestModuleLoggers:
 # Integration: Flask API
 # ---------------------------------------------------------------------------
 
+
 class TestFlaskLogAPI:
     @pytest.fixture(autouse=True)
     def setup_app(self, tmp_path, monkeypatch):
         self.log_dir = tmp_path
 
-        (tmp_path / "stream.log").write_text(
-            "2026-03-20 14:00:00 [INFO] [stream] Stream started\n"
-        )
+        (tmp_path / "stream.log").write_text("2026-03-20 14:00:00 [INFO] [stream] Stream started\n")
         (tmp_path / "web.log").write_text(
             "2026-03-20 14:00:01 [INFO] [web] Ready\n"
             "2026-03-20 14:00:02 [INFO] [snapshot] Snap taken\n"
@@ -366,15 +373,19 @@ class TestFlaskLogAPI:
 
         import config
         import logs
+
         _orig_load = config.load
+
         def _patched_load():
             c = _orig_load()
             c["system"]["log_path"] = str(tmp_path)
             return c
+
         monkeypatch.setattr(logs, "load_config", _patched_load)
         _cache.clear()
 
         from app import app
+
         app.config["TESTING"] = True
         self.client = app.test_client()
 
@@ -422,6 +433,7 @@ class TestFlaskLogAPI:
 # ---------------------------------------------------------------------------
 # Cleanup temp config
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(autouse=True, scope="session")
 def cleanup_temp_config():

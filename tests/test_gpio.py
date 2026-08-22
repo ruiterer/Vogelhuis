@@ -4,7 +4,6 @@ import json
 import os
 import sys
 import tempfile
-import time
 
 import pytest
 
@@ -22,8 +21,9 @@ os.environ["BIRDCAM_CONFIG"] = _tmp_config.name
 # Config validation
 # ---------------------------------------------------------------------------
 
-from config import validate, DEFAULTS, _deep_merge
-import copy
+import copy  # noqa: E402  # import na sys.path-aanpassing voor src/
+
+from config import DEFAULTS, validate  # noqa: E402  # import na sys.path-aanpassing voor src/
 
 
 def make_config(**overrides):
@@ -81,7 +81,11 @@ class TestGpioPinValidation:
     def test_all_different_pins_valid(self):
         config = make_config()
         config["gpio"]["pins"] = {
-            "ir_light": 2, "light": 3, "fan": 4, "dht22": 5, "motion": 6,
+            "ir_light": 2,
+            "light": 3,
+            "fan": 4,
+            "dht22": 5,
+            "motion": 6,
         }
         errors = validate(config)
         assert errors == []
@@ -239,7 +243,11 @@ class TestMqttValidation:
 # Fan control logic
 # ---------------------------------------------------------------------------
 
-from gpio_service import _state, _update_fan, _process_commands, _write_status, STATUS_FILE
+from gpio_service import (  # noqa: E402  # import na sys.path-aanpassing voor src/
+    _process_commands,
+    _state,
+    _update_fan,
+)
 
 
 class TestFanControlLogic:
@@ -310,6 +318,7 @@ class TestComplementaryLightCommands:
         self.cmd_file = str(tmp_path / "gpio_commands")
         self.status_file = str(tmp_path / "gpio_status.json")
         import gpio_service
+
         monkeypatch.setattr(gpio_service, "COMMAND_FILE", self.cmd_file)
         monkeypatch.setattr(gpio_service, "STATUS_FILE", self.status_file)
         monkeypatch.setattr(gpio_service, "_output_lines", None)
@@ -383,7 +392,10 @@ class TestComplementaryLightCommands:
 # Light schedule logic
 # ---------------------------------------------------------------------------
 
-from gpio_service import _is_night_time, _parse_time
+from gpio_service import (  # noqa: E402  # import na sys.path-aanpassing voor src/
+    _is_night_time,
+    _parse_time,
+)
 
 
 class TestLightScheduleLogic:
@@ -396,8 +408,8 @@ class TestLightScheduleLogic:
         """Night is between 21:15 and 06:30."""
         config = make_config()
 
-        from unittest.mock import patch
         from datetime import datetime
+        from unittest.mock import patch
 
         # 22:00 should be night
         with patch("gpio_service.datetime") as mock_dt:
@@ -419,8 +431,8 @@ class TestLightScheduleLogic:
 
     def test_exact_night_start_is_night(self):
         config = make_config()
-        from unittest.mock import patch
         from datetime import datetime
+        from unittest.mock import patch
 
         with patch("gpio_service.datetime") as mock_dt:
             mock_dt.now.return_value = datetime(2026, 3, 28, 21, 15, 0)
@@ -429,8 +441,8 @@ class TestLightScheduleLogic:
 
     def test_exact_day_start_is_day(self):
         config = make_config()
-        from unittest.mock import patch
         from datetime import datetime
+        from unittest.mock import patch
 
         with patch("gpio_service.datetime") as mock_dt:
             mock_dt.now.return_value = datetime(2026, 3, 28, 6, 30, 0)
@@ -442,6 +454,7 @@ class TestLightScheduleLogic:
 # MQTT payload
 # ---------------------------------------------------------------------------
 
+
 class TestMqttPayload:
     def test_mqtt_disabled_by_default(self):
         config = make_config()
@@ -450,6 +463,7 @@ class TestMqttPayload:
     def test_payload_format(self):
         """Verify MQTT payload structure matches Node-RED format."""
         from gpio_service import _state
+
         _state["temperature"] = 22.5
         _state["humidity"] = 65.0
         _state["light"] = True
@@ -490,7 +504,7 @@ class TestMqttPayload:
 # Flask API endpoints
 # ---------------------------------------------------------------------------
 
-import database as db
+import database as db  # noqa: E402  # import na sys.path-aanpassing voor src/
 
 
 class TestGpioApiEndpoints:
@@ -512,12 +526,14 @@ class TestGpioApiEndpoints:
 
         import config
         import logs
+
         _orig_load = config.load
 
         def _patched_load():
             c = _orig_load()
             c["system"]["log_path"] = str(log_dir)
             return c
+
         monkeypatch.setattr(logs, "load_config", _patched_load)
 
         # Temp GPIO status file
@@ -529,12 +545,21 @@ class TestGpioApiEndpoints:
 
         # Write a status file
         with open(status_file, "w") as f:
-            json.dump({
-                "light": True, "ir_light": False, "fan": False, "fan_auto": True,
-                "motion": False, "temperature": 22.5, "humidity": 65.0,
-                "cpu_temp": 45.2, "cpu_load": 8.0,
-                "timestamp": "2026-03-28T12:00:00",
-            }, f)
+            json.dump(
+                {
+                    "light": True,
+                    "ir_light": False,
+                    "fan": False,
+                    "fan_auto": True,
+                    "motion": False,
+                    "temperature": 22.5,
+                    "humidity": 65.0,
+                    "cpu_temp": 45.2,
+                    "cpu_load": 8.0,
+                    "timestamp": "2026-03-28T12:00:00",
+                },
+                f,
+            )
 
         # Insert some sensor data
         for i in range(5):
@@ -542,6 +567,7 @@ class TestGpioApiEndpoints:
         db.record_motion_event()
 
         from app import app
+
         app.config["TESTING"] = True
         self.client = app.test_client()
 
@@ -562,37 +588,34 @@ class TestGpioApiEndpoints:
         assert data["temperature"] == 22.5
 
     def test_gpio_light_toggle(self):
-        resp = self.client.post("/api/gpio/light",
-                                json={"state": True},
-                                content_type="application/json")
+        resp = self.client.post(
+            "/api/gpio/light", json={"state": True}, content_type="application/json"
+        )
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["status"] == "ok"
         assert data["target"] == "light"
 
     def test_gpio_ir_light_toggle(self):
-        resp = self.client.post("/api/gpio/ir-light",
-                                json={"state": False},
-                                content_type="application/json")
+        resp = self.client.post(
+            "/api/gpio/ir-light", json={"state": False}, content_type="application/json"
+        )
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["target"] == "ir_light"
 
     def test_gpio_fan_toggle(self):
-        resp = self.client.post("/api/gpio/fan",
-                                json={"state": True},
-                                content_type="application/json")
+        resp = self.client.post(
+            "/api/gpio/fan", json={"state": True}, content_type="application/json"
+        )
         assert resp.status_code == 200
 
     def test_gpio_toggle_missing_state(self):
-        resp = self.client.post("/api/gpio/light",
-                                json={},
-                                content_type="application/json")
+        resp = self.client.post("/api/gpio/light", json={}, content_type="application/json")
         assert resp.status_code == 400
 
     def test_gpio_toggle_no_body(self):
-        resp = self.client.post("/api/gpio/light",
-                                content_type="application/json")
+        resp = self.client.post("/api/gpio/light", content_type="application/json")
         assert resp.status_code == 400
 
     def test_sensor_data_returns_json(self):
@@ -671,6 +694,7 @@ class TestConfigApiGpio:
         monkeypatch.setattr("config.CONFIG_PATH", str(self.config_file))
 
         from app import app
+
         app.config["TESTING"] = True
         self.client = app.test_client()
 
@@ -681,9 +705,11 @@ class TestConfigApiGpio:
         assert "mqtt" in data
 
     def test_config_put_gpio_settings(self):
-        resp = self.client.put("/api/config",
-                               json={"gpio": {"sensor_poll_interval": 30}},
-                               content_type="application/json")
+        resp = self.client.put(
+            "/api/config",
+            json={"gpio": {"sensor_poll_interval": 30}},
+            content_type="application/json",
+        )
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["gpio_restart_required"] is True
@@ -694,15 +720,19 @@ class TestConfigApiGpio:
         assert data["gpio"]["sensor_poll_interval"] == 30
 
     def test_config_put_mqtt_settings(self):
-        resp = self.client.put("/api/config",
-                               json={"mqtt": {"enabled": True, "broker": "192.168.1.100"}},
-                               content_type="application/json")
+        resp = self.client.put(
+            "/api/config",
+            json={"mqtt": {"enabled": True, "broker": "192.168.1.100"}},
+            content_type="application/json",
+        )
         assert resp.status_code == 200
 
     def test_config_put_invalid_gpio(self):
-        resp = self.client.put("/api/config",
-                               json={"gpio": {"sensor_poll_interval": 5}},
-                               content_type="application/json")
+        resp = self.client.put(
+            "/api/config",
+            json={"gpio": {"sensor_poll_interval": 5}},
+            content_type="application/json",
+        )
         assert resp.status_code == 400
 
 

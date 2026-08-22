@@ -1,8 +1,9 @@
 """System health monitoring for Birdcam."""
 
 import os
-import time
 import subprocess
+import time
+
 import psutil
 
 from config import load as load_config
@@ -69,9 +70,11 @@ def get_uptime():
 def get_service_status(service_name):
     """Check if a systemd service is active."""
     try:
-        result = subprocess.run(
-            ["systemctl", "is-active", service_name],
-            capture_output=True, text=True, timeout=5,
+        result = subprocess.run(  # noqa: S603  # vaste argv zonder shell
+            ["systemctl", "is-active", service_name],  # noqa: S607  # vaste commandonaam via PATH op de Pi
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         return result.stdout.strip()
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:

@@ -1,0 +1,33 @@
+# Golden-template ruff-config (linter + formatter) voor Python-projecten
+# (D-027 in Portfolio_Manager).
+#
+# Adoptie:
+# 1. Kopieer dit bestand naar de projectroot als ruff.toml, of neem de
+#    regels over als [tool.ruff]-tabellen in pyproject.toml.
+# 2. Installeer ruff in de venv van het project:
+#      .venv/bin/pip install ruff
+# 3. Commando's (samen ook geschikt als LINT_CMD in scripts/hooks/pre-commit):
+#      .venv/bin/ruff check . && .venv/bin/ruff format --check .
+# 4. Typechecking is opt-in per project (advies: mypy — installeert als
+#    gewone dev-dependency in de project-venv). Zo ja:
+#      .venv/bin/pip install mypy
+#    en breid LINT_CMD uit met: && .venv/bin/mypy .
+#
+# Bescheiden regelset, expliciet vastgepind (de ruff-defaults bleken per
+# versie te verschuiven — pilotles 2026-08-22): basisfouten (E4/E7/E9/F),
+# importsortering (I), security-patronen (S, "bandit": hardcoded secrets,
+# shell=True, zwakke hashes) en klassieke valkuilen (B, "bugbear": kale
+# except, mutable default-argumenten). Per project uitbreiden mag; leg
+# bewuste afwijkingen uit in CLAUDE.md.
+
+line-length = 100
+
+[lint]
+select = ["E4", "E7", "E9", "F", "I", "S", "B"]
+
+[lint.per-file-ignores]
+# S101 verbiedt `assert` — in testcode is assert juist het gereedschap.
+# Patronen dekken ook smoke-tests buiten tests/ (pilotles 2026-08-22).
+"tests/**" = ["S101"]
+"**/test_*.py" = ["S101"]
+"**/*_test.py" = ["S101"]

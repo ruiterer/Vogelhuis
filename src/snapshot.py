@@ -1,9 +1,7 @@
 """Snapshot capture from HLS stream for Birdcam."""
 
-import glob
 import os
 import subprocess
-import time
 from datetime import datetime
 
 from config import load as load_config
@@ -54,16 +52,24 @@ def take_snapshot():
     filename = f"{timestamp}.jpg"
     output_path = os.path.join(snap_path, filename)
 
-    result = subprocess.run(
-        [
-            "ffmpeg", "-hide_banner", "-loglevel", "error",
-            "-i", segment,
-            "-frames:v", "1",
-            "-q:v", "2",
+    result = subprocess.run(  # noqa: S603  # vaste argv zonder shell
+        [  # noqa: S607  # vaste commandonaam via PATH op de Pi
+            "ffmpeg",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-i",
+            segment,
+            "-frames:v",
+            "1",
+            "-q:v",
+            "2",
             "-y",
             output_path,
         ],
-        capture_output=True, text=True, timeout=10,
+        capture_output=True,
+        text=True,
+        timeout=10,
     )
 
     if result.returncode != 0:
@@ -89,11 +95,13 @@ def list_snapshots():
     for f in os.listdir(snap_path):
         if f.endswith(".jpg"):
             full = os.path.join(snap_path, f)
-            files.append({
-                "filename": f,
-                "size_kb": round(os.path.getsize(full) / 1024),
-                "timestamp": f.replace(".jpg", ""),
-            })
+            files.append(
+                {
+                    "filename": f,
+                    "size_kb": round(os.path.getsize(full) / 1024),
+                    "timestamp": f.replace(".jpg", ""),
+                }
+            )
 
     files.sort(key=lambda x: x["filename"], reverse=True)
     return files

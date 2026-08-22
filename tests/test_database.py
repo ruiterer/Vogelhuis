@@ -18,7 +18,7 @@ _tmp_config.write("{}\n")
 _tmp_config.close()
 os.environ["BIRDCAM_CONFIG"] = _tmp_config.name
 
-import database as db
+import database as db  # noqa: E402  # import na sys.path-aanpassing voor src/
 
 
 @pytest.fixture(autouse=True)
@@ -35,9 +35,7 @@ def temp_db(tmp_path):
 class TestSchemaCreation:
     def test_tables_created(self, temp_db):
         conn = sqlite3.connect(temp_db)
-        tables = conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table'"
-        ).fetchall()
+        tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
         table_names = {t[0] for t in tables}
         assert "sensor_data" in table_names
         assert "motion_events" in table_names
@@ -45,9 +43,7 @@ class TestSchemaCreation:
 
     def test_indexes_created(self, temp_db):
         conn = sqlite3.connect(temp_db)
-        indexes = conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='index'"
-        ).fetchall()
+        indexes = conn.execute("SELECT name FROM sqlite_master WHERE type='index'").fetchall()
         index_names = {i[0] for i in indexes}
         assert "idx_sensor_data_timestamp" in index_names
         assert "idx_motion_events_timestamp" in index_names
@@ -77,8 +73,12 @@ class TestRecordSensorData:
 
     def test_insert_with_status_flags(self):
         db.record_sensor_data(
-            temperature=20.0, humidity=50.0,
-            light_status=1, ir_light_status=0, fan_status=1, motion_status=0,
+            temperature=20.0,
+            humidity=50.0,
+            light_status=1,
+            ir_light_status=0,
+            fan_status=1,
+            motion_status=0,
         )
         latest = db.get_latest_reading()
         assert latest["light_status"] == 1
@@ -134,8 +134,14 @@ class TestGetSensorData:
 
     def test_returns_all_fields(self):
         db.record_sensor_data(
-            temperature=22.0, humidity=55.0, cpu_temp=42.0, cpu_load=8.0,
-            light_status=1, ir_light_status=0, fan_status=0, motion_status=1,
+            temperature=22.0,
+            humidity=55.0,
+            cpu_temp=42.0,
+            cpu_load=8.0,
+            light_status=1,
+            ir_light_status=0,
+            fan_status=0,
+            motion_status=1,
         )
         data = db.get_sensor_data(minutes=5)
         assert len(data) >= 1

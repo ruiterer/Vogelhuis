@@ -5,14 +5,14 @@ import os
 import subprocess
 import time
 
-from flask import Flask, render_template, jsonify, request, send_from_directory, abort
+from flask import Flask, abort, jsonify, render_template, request, send_from_directory
 
 import config as cfg
-from database import get_sensor_data, get_motion_events, get_latest_reading
+from database import get_motion_events, get_sensor_data
 from health import get_full_health
-from snapshot import take_snapshot, list_snapshots
-from logs import get_logs, get_sources
 from logging_setup import get_logger
+from logs import get_logs, get_sources
+from snapshot import list_snapshots, take_snapshot
 
 app = Flask(__name__)
 
@@ -21,13 +21,14 @@ _last_snapshot_time = 0
 SNAPSHOT_MIN_INTERVAL = 3  # seconds between snapshots
 
 # GPIO command file (shared with gpio_service via /dev/shm)
-GPIO_COMMAND_FILE = "/dev/shm/birdcam/gpio_commands"
-GPIO_STATUS_FILE = "/dev/shm/birdcam/gpio_status.json"
+GPIO_COMMAND_FILE = "/dev/shm/birdcam/gpio_commands"  # noqa: S108  # vast tmpfs-IPC-pad op de Pi, geen gedeelde temp-dir
+GPIO_STATUS_FILE = "/dev/shm/birdcam/gpio_status.json"  # noqa: S108  # vast tmpfs-IPC-pad op de Pi, geen gedeelde temp-dir
 
 logger = get_logger("web")
 
 
 # --- Pages ---
+
 
 @app.route("/")
 def index():
@@ -41,11 +42,14 @@ def settings():
     # Mask password but indicate if one is set
     conf["mqtt"]["password_set"] = bool(conf.get("mqtt", {}).get("password"))
     conf["mqtt"]["password"] = ""
-    return render_template("settings.html", config=conf,
-                           resolutions=cfg.VALID_RESOLUTIONS,
-                           framerates=cfg.VALID_FRAMERATES,
-                           camera_models=cfg.VALID_CAMERA_MODELS,
-                           camera_model_labels=cfg.CAMERA_MODEL_LABELS)
+    return render_template(
+        "settings.html",
+        config=conf,
+        resolutions=cfg.VALID_RESOLUTIONS,
+        framerates=cfg.VALID_FRAMERATES,
+        camera_models=cfg.VALID_CAMERA_MODELS,
+        camera_model_labels=cfg.CAMERA_MODEL_LABELS,
+    )
 
 
 @app.route("/health")
@@ -61,6 +65,7 @@ def graphs_page():
 
 
 # --- API ---
+
 
 @app.route("/api/health")
 def api_health():
@@ -205,11 +210,13 @@ def api_config_put():
     logger.info("Configuration updated")
 
     gpio_restart = _gpio_config_changed(new_config)
-    return jsonify({
-        "status": "saved",
-        "restart_required": _stream_config_changed(new_config),
-        "gpio_restart_required": gpio_restart,
-    })
+    return jsonify(
+        {
+            "status": "saved",
+            "restart_required": _stream_config_changed(new_config),
+            "gpio_restart_required": gpio_restart,
+        }
+    )
 
 
 @app.route("/api/logs")
@@ -226,8 +233,10 @@ def api_logs():
 def api_restart_stream():
     try:
         result = subprocess.run(
-            ["sudo", "systemctl", "restart", "birdcam-stream"],
-            capture_output=True, text=True, timeout=30,
+            ["sudo", "systemctl", "restart", "birdcam-stream"],  # noqa: S607  # vaste commandonaam via PATH op de Pi
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode == 0:
             logger.info("Stream service restarted")
@@ -240,6 +249,7 @@ def api_restart_stream():
 
 # --- GPIO API ---
 
+
 @app.route("/api/gpio/status")
 def api_gpio_status():
     """Return current GPIO/sensor state from the status file."""
@@ -248,12 +258,21 @@ def api_gpio_status():
             status = json.load(f)
         return jsonify(status)
     except (FileNotFoundError, json.JSONDecodeError):
-        return jsonify({
-            "light": False, "ir_light": False, "fan": False, "fan_auto": True,
-            "motion": False, "temperature": None, "humidity": None,
-            "cpu_temp": None, "cpu_load": None, "timestamp": None,
-            "service_running": False,
-        })
+        return jsonify(
+            {
+                "light": False,
+                "ir_light": False,
+                "fan": False,
+                "fan_auto": True,
+                "motion": False,
+                "temperature": None,
+                "humidity": None,
+                "cpu_temp": None,
+                "cpu_load": None,
+                "timestamp": None,
+                "service_running": False,
+            }
+        )
 
 
 @app.route("/api/gpio/light", methods=["POST"])
@@ -275,8 +294,10 @@ def api_gpio_fan():
 def api_restart_gpio():
     try:
         result = subprocess.run(
-            ["sudo", "systemctl", "restart", "birdcam-gpio"],
-            capture_output=True, text=True, timeout=30,
+            ["sudo", "systemctl", "restart", "birdcam-gpio"],  # noqa: S607  # vaste commandonaam via PATH op de Pi
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode == 0:
             logger.info("GPIO service restarted")
@@ -308,6 +329,7 @@ def _send_gpio_command(target):
 
 
 # --- Sensor data API ---
+
 
 @app.route("/api/sensor-data")
 def api_sensor_data():
@@ -342,10 +364,11 @@ def _gpio_config_changed(new_config):
 
 # --- Error handlers ---
 
+
 @app.errorhandler(404)
 def not_found(e):
     return jsonify({"error": "Not found"}), 404
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=8080, debug=True)
+    app.run(host="127.0.0.1", port=8080, debug=True)  # noqa: S201  # dev-run op localhost; productie via gunicorn (birdcam-web.service)

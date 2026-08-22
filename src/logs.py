@@ -8,9 +8,7 @@ from config import load as load_config
 from logging_setup import SOURCE_FILE_MAP
 
 # Matches our structured format: 2026-03-20 14:30:00 [LEVEL] [source] message
-STRUCTURED_RE = re.compile(
-    r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) \[(\w+)\] \[(\w+)\] (.*)$"
-)
+STRUCTURED_RE = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) \[(\w+)\] \[(\w+)\] (.*)$")
 
 # mtime-based cache: {filepath: {"mtime": float, "entries": list}}
 _cache = {}
@@ -85,13 +83,15 @@ def _read_log_file(filepath, source_hint, max_lines=2000):
                 if entry:
                     entries.append(entry)
     except (PermissionError, OSError):
-        entries.append({
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "level": "ERROR",
-            "source": source_hint,
-            "message": f"Could not read {filepath}",
-            "unstructured": False,
-        })
+        entries.append(
+            {
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "level": "ERROR",
+                "source": source_hint,
+                "message": f"Could not read {filepath}",
+                "unstructured": False,
+            }
+        )
 
     _cache[filepath] = {"mtime": mtime, "entries": entries}
     return entries

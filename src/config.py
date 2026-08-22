@@ -35,7 +35,7 @@ DEFAULTS = {
     "hls": {
         "segment_duration": 2,
         "playlist_size": 5,
-        "path": "/dev/shm/birdcam",
+        "path": "/dev/shm/birdcam",  # noqa: S108  # vast tmpfs-IPC-pad op de Pi, geen gedeelde temp-dir
     },
     "gpio": {
         "enabled": True,
