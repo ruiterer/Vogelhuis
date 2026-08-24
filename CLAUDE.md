@@ -1,6 +1,6 @@
-<!-- portfolio-template: v1 -->
+<!-- portfolio-template: v2 -->
 <!-- base-start -->
-## Portfolio-basisregels (golden template v1)
+## Portfolio-basisregels (golden template v2)
 
 - Communiceer met Erik in het Nederlands; code, identifiers en commits in het
   Engels. (Wijkt dit project bewust af? Zet de afwijking onder
@@ -11,11 +11,6 @@
   systeem-Python.
 - Draai de projecttests vóór elke commit; wat afdwingbaar is zit in hooks/CI,
   niet in dit bestand.
-- Engineeringprincipes (verkort; reden: gedrags-guardrail voor modelgeneraties
-  t/m Claude 4.x, herbeoordelen bij elke grote modelrelease — D-002 in
-  Portfolio_Manager): denk eerst na en benoem aannames; minimale oplossing,
-  niets speculatiefs; raak alleen wat de taak vereist; formuleer een toetsbaar
-  succescriterium en verifieer het resultaat.
 - Verouderende feiten (modelnamen, API-gedrag, statusdatums) horen in
   config/README, niet in dit bestand.
 <!-- base-end -->
