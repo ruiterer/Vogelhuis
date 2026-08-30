@@ -1,6 +1,6 @@
-<!-- portfolio-template: v2 -->
+<!-- portfolio-template: v3 -->
 <!-- base-start -->
-## Portfolio-basisregels (golden template v2)
+## Portfolio-basisregels (golden template v3)
 
 - Communiceer met Erik in het Nederlands; code, identifiers en commits in het
   Engels. (Wijkt dit project bewust af? Zet de afwijking onder
@@ -9,8 +9,10 @@
   macOS Keychain of een gitignored `.env`. De portfolio-scan bewaakt dit.
 - Gebruik altijd de interpreter/venv van het project zelf, nooit
   systeem-Python.
-- Draai de projecttests vóór elke commit; wat afdwingbaar is zit in hooks/CI,
-  niet in dit bestand.
+- Draai het verificatiecommando van dit project vóór je een klus klaar
+  meldt én vóór elke commit, en toon de uitvoer. Faalt een test: repareer
+  de code, niet de test (tenzij de test aantoonbaar fout is — zeg dat er
+  dan bij). Wat afdwingbaar is zit in hooks/CI, niet in dit bestand.
 - Verouderende feiten (modelnamen, API-gedrag, statusdatums) horen in
   config/README, niet in dit bestand.
 <!-- base-end -->
