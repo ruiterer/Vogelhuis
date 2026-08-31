@@ -23,6 +23,10 @@
 
 Geen afwijkingen van de basisregels.
 
+Bij wijzigingen aan de webinterface/API of de nginx-routes: draai vóór de
+commit /code-review of /security-review (D-035) — de camera draait op het
+thuisnetwerk zonder login.
+
 ## Project
 
 Raspberry Pi birdhouse camera system — LAN-only, browser-based live HLS stream with web UI. Runs on Raspberry Pi OS Lite (Bookworm) with a Pi Camera 3 NoIR.
@@ -131,14 +135,16 @@ mqtt:      # enabled, broker, port, username, password, topic, location, object_
 
 ## Testing
 
-```bash
-# On dev machine (requires pytest, flask, pyyaml, psutil, paho-mqtt):
-python -m pytest tests/ -v  # 128 unit/integration tests
+Verification command (v3, identical to the pre-commit hook; deps live in
+the project `.venv`): `.venv/bin/python3 -m pytest tests/ -q &&
+.venv/bin/ruff check . && .venv/bin/ruff format --check .`
 
-# Individual test files:
-python -m pytest tests/test_logging.py -v   # logging system tests
-python -m pytest tests/test_database.py -v  # SQLite database tests
-python -m pytest tests/test_gpio.py -v      # GPIO config, logic, API tests
+```bash
+# Individual test files (via the project venv):
+
+.venv/bin/python3 -m pytest tests/test_logging.py -v   # logging system tests
+.venv/bin/python3 -m pytest tests/test_database.py -v  # SQLite database tests
+.venv/bin/python3 -m pytest tests/test_gpio.py -v      # GPIO config, logic, API tests
 
 # On Pi:
 sudo bash install.sh          # fresh install
@@ -146,7 +152,7 @@ sudo bash tests/smoke_test.sh # automated smoke tests
 sudo bash update.sh           # deploy changes
 ```
 
-## Constraints
+## Architecture invariants (constraints)
 
 - Keep CPU usage low (target <15% at 720p/25fps)
 - Minimize SD card writes (HLS on tmpfs, SQLite with WAL mode, structured logging)
