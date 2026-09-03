@@ -1,5 +1,7 @@
 # Birdcam
 
+> **Status:** personal hobby project — built for my own setup. It works for me; no support or maintenance promised.
+
 A Raspberry Pi birdhouse camera system with live HLS streaming, GPIO sensor monitoring, and a browser-based UI.
 
 ## Features
@@ -118,3 +120,7 @@ Snapshots and sensor data are preserved by default during uninstall.
 ## License
 
 Private project.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
