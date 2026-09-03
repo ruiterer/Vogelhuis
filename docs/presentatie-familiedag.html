@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Het Vogelhuis - Familiedag</title>
+<style>
+  :root {
+    --bg: #fdf8ef;
+    --bg-alt: #eef5ec;
+    --ink: #1f2a23;
+    --muted: #5a6b5f;
+    --accent: #2f6b3b;
+    --accent-warm: #d97706;
+    --accent-soft: #e8d9b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .deck {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    padding: max(env(safe-area-inset-top), 28px) 28px max(env(safe-area-inset-bottom), 28px) 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity .35s ease, transform .35s ease;
+    pointer-events: none;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+  .slide:nth-child(odd)  { background: var(--bg); }
+  .slide:nth-child(even) { background: var(--bg-alt); }
+
+  .emoji {
+    font-size: clamp(64px, 18vw, 120px);
+    line-height: 1;
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-size: clamp(34px, 9vw, 56px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  h2 {
+    font-size: clamp(28px, 7.5vw, 44px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--accent);
+    margin-bottom: 18px;
+  }
+  p, li {
+    font-size: clamp(18px, 5vw, 26px);
+    line-height: 1.4;
+    color: var(--ink);
+  }
+  p + p { margin-top: 14px; }
+  ul {
+    list-style: none;
+    margin-top: 8px;
+  }
+  li {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(31,42,35,.08);
+  }
+  li:last-child { border-bottom: none; }
+  .lead {
+    font-size: clamp(20px, 5.5vw, 30px);
+    color: var(--muted);
+    margin-bottom: 22px;
+  }
+  .pill {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: clamp(13px, 3.5vw, 16px);
+    font-weight: 600;
+    letter-spacing: .02em;
+    margin-bottom: 18px;
+  }
+  .footnote {
+    margin-top: 22px;
+    font-size: clamp(15px, 4vw, 19px);
+    color: var(--muted);
+  }
+  .hero h1 { font-size: clamp(44px, 13vw, 84px); }
+  .hero .subtitle {
+    font-size: clamp(20px, 5.5vw, 30px);
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+  .hero .meta {
+    margin-top: auto;
+    font-size: clamp(14px, 3.8vw, 17px);
+    color: var(--muted);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .accent-warm { color: var(--accent-warm); font-weight: 700; }
+  .accent { color: var(--accent); font-weight: 700; }
+
+  .progress {
+    position: fixed;
+    left: 0; right: 0;
+    bottom: max(env(safe-area-inset-bottom), 10px);
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .progress span {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(31,42,35,.18);
+    transition: background .25s, transform .25s;
+  }
+  .progress span.on {
+    background: var(--accent);
+    transform: scale(1.4);
+  }
+  .counter {
+    position: fixed;
+    top: max(env(safe-area-inset-top), 10px);
+    right: 14px;
+    font-size: 13px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    z-index: 10;
+    pointer-events: none;
+  }
+  .hint {
+    position: fixed;
+    top: max(env(safe-area-inset-top), 10px);
+    left: 14px;
+    font-size: 13px;
+    color: var(--muted);
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .4s;
+  }
+  .hint.show { opacity: 1; }
+
+  @media (orientation: landscape) and (max-height: 500px) {
+    .slide { padding: 18px 32px; }
+    .emoji { font-size: 56px; margin-bottom: 10px; }
+    h1 { font-size: 38px; }
+    h2 { font-size: 30px; margin-bottom: 12px; }
+    p, li { font-size: 19px; }
+    li { padding: 6px 0; }
+  }
+
+  @media print {
+    @page { size: A4 landscape; margin: 14mm; }
+    html, body { height: auto; overflow: visible; background: #fff; }
+    .deck { position: static; }
+    .counter, .hint, .progress { display: none !important; }
+    .slide {
+      position: relative;
+      inset: auto;
+      opacity: 1 !important;
+      transform: none !important;
+      pointer-events: auto;
+      page-break-after: always;
+      break-after: page;
+      min-height: 95vh;
+      padding: 24mm 22mm;
+      background: #fff !important;
+    }
+    .slide:last-child { page-break-after: auto; break-after: auto; }
+    h1, h2 { color: #1f4d27 !important; }
+    h1 { font-size: 44pt; }
+    h2 { font-size: 30pt; }
+    p, li { font-size: 16pt; color: #1f2a23 !important; }
+    .pill { background: #e8d9b8 !important; color: #1f4d27 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .emoji { font-size: 64pt; }
+  }
+</style>
+</head>
+<body>
+
+<div class="counter"><span id="cur">1</span> / <span id="tot">10</span></div>
+<div class="hint" id="hint">Tik rechts om verder, links om terug</div>
+
+<div class="deck" id="deck">
+
+  <section class="slide hero active">
+    <div class="emoji">🐦</div>
+    <h1>Het Vogelhuis</h1>
+    <p class="subtitle">Een kijkje bij de vogels — live vanaf onze tuin.</p>
+    <div class="meta">Ruiter familiedag · 2026</div>
+  </section>
+
+  <section class="slide">
+    <span class="pill">Wat is het?</span>
+    <h2>Een vogelhuisje met een mini-computertje en een camera erin.</h2>
+    <p>Op je telefoon kijk je mee — alsof je zelf in het huisje zit.</p>
+    <p class="footnote">Geen tv-uitzending: het beeld is écht live.</p>
+  </section>
+
+  <section class="slide">
+    <span class="pill">Wat zie je?</span>
+    <h2>Een live blik in het huisje</h2>
+    <ul>
+      <li>📺 Live videobeeld, dag én nacht</li>
+      <li>📸 Met één tik een foto maken</li>
+      <li>🎞️ Terugkijken wat er eerder gebeurde</li>
+      <li>🔇 De vogels merken er niets van</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <span class="pill">Het brein</span>
+    <h2>Een Raspberry Pi</h2>
+    <p>Een complete computer, zo groot als <span class="accent">een pak speelkaarten</span>.</p>
+    <p>Kost ongeveer <span class="accent-warm">€ 60</span>.</p>
+    <p>Verbruikt evenveel stroom als een nachtlampje.</p>
+    <p class="footnote">Draait 24 uur per dag — ook als wij slapen.</p>
+  </section>
+
+  <section class="slide">
+    <span class="pill">In het donker</span>
+    <h2>De camera ziet ook 's nachts</h2>
+    <p>Naast de camera zit een <span class="accent">infrarood-lampje</span>.</p>
+    <p>Wij zien dat licht niet — net als bij een afstandsbediening.</p>
+    <p>De camera wel. Dus 's nachts toch scherp beeld.</p>
+    <p class="footnote">De vogels worden er niet door wakker.</p>
+  </section>
+
+  <section class="slide">
+    <span class="pill">Sensoren</span>
+    <h2>Het huisje "voelt" mee</h2>
+    <ul>
+      <li>🌡️ Hoe warm en vochtig is het binnen?</li>
+      <li>🚶 Een bewegingsmelder telt elk bezoek</li>
+      <li>❄️ Een ventilator zorgt dat de Pi niet oververhit</li>
+      <li>💾 Alle metingen worden bewaard</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <span class="pill">Slim</span>
+    <h2>Het regelt zichzelf</h2>
+    <ul>
+      <li>☀️ Overdag: gewoon licht aan</li>
+      <li>🌙 's Nachts: infrarood aan</li>
+      <li>🔥 Te warm? Ventilator schakelt vanzelf</li>
+      <li>🧹 Oude foto's gaan vanzelf weg</li>
+    </ul>
+    <p class="footnote">Niemand hoeft erop te letten — het werkt gewoon.</p>
+  </section>
+
+  <section class="slide">
+    <span class="pill">De bediening</span>
+    <h2>Een simpele website</h2>
+    <ul>
+      <li><b>Live</b> — het beeld op dit moment</li>
+      <li><b>Grafieken</b> — temperatuur en bezoek door de tijd</li>
+      <li><b>Gezondheid</b> — gaat alles nog goed?</li>
+      <li><b>Instellingen</b> — knoppen om aan te draaien</li>
+    </ul>
+    <p class="footnote"><span class="accent">Geen cloud</span> — alles blijft thuis op het netwerk.</p>
+  </section>
+
+  <section class="slide">
+    <span class="pill">Wat leer je ervan?</span>
+    <h2>Vragen die het beantwoordt</h2>
+    <ul>
+      <li>Hoe vaak per dag krijgen we bezoek?</li>
+      <li>Wanneer gaan de vogels slapen?</li>
+      <li>Hoe warm wordt het in het huisje op een zomerdag?</li>
+      <li>En soms: wie is hier komen wonen? 🐣</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <div class="emoji">🐦💛</div>
+    <h1>Vragen?</h1>
+    <p class="subtitle">Het vogelhuis staat hier — kom gerust kijken.</p>
+    <p class="footnote">Kinderen mogen meekijken met het live beeld!</p>
+  </section>
+
+</div>
+
+<div class="progress" id="progress"></div>
+
+<script>
+(function () {
+  var slides = document.querySelectorAll('.slide');
+  var total = slides.length;
+  var idx = 0;
+  var cur = document.getElementById('cur');
+  var tot = document.getElementById('tot');
+  var progress = document.getElementById('progress');
+  var hint = document.getElementById('hint');
+  tot.textContent = total;
+
+  for (var i = 0; i < total; i++) {
+    var dot = document.createElement('span');
+    progress.appendChild(dot);
+  }
+  var dots = progress.children;
+
+  function show(n) {
+    if (n < 0) n = 0;
+    if (n > total - 1) n = total - 1;
+    if (n === idx) return;
+    slides[idx].classList.remove('active');
+    dots[idx].classList.remove('on');
+    idx = n;
+    slides[idx].classList.add('active');
+    dots[idx].classList.add('on');
+    cur.textContent = idx + 1;
+  }
+  function next() { show(idx + 1); }
+  function prev() { show(idx - 1); }
+
+  dots[0].classList.add('on');
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { next(); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'Backspace') { prev(); e.preventDefault(); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(total - 1); }
+  });
+
+  var startX = 0, startY = 0, tracking = false;
+  document.addEventListener('touchstart', function (e) {
+    if (e.touches.length !== 1) { tracking = false; return; }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = true;
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (!tracking) return;
+    tracking = false;
+    var t = e.changedTouches[0];
+    var dx = t.clientX - startX;
+    var dy = t.clientY - startY;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0) next(); else prev();
+      return;
+    }
+    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+      if (t.clientX > window.innerWidth / 2) next(); else prev();
+    }
+  }, { passive: true });
+
+  document.addEventListener('click', function (e) {
+    if ('ontouchstart' in window) return;
+    if (e.clientX > window.innerWidth / 2) next(); else prev();
+  });
+
+  setTimeout(function () { hint.classList.add('show'); }, 400);
+  setTimeout(function () { hint.classList.remove('show'); }, 4500);
+})();
+</script>
+</body>
+</html>
